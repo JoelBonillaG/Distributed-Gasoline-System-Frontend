@@ -41,14 +41,10 @@ function Login() {
                                 <Plus className="size-7" />
                             </div>
                             <h2 className="text-4xl md:text-5xl font-extrabold leading-tight tracking-tight">
-                                Salud con calidad y confianza
+                                Gestión de Combustible Inteligente
                             </h2>
                             <p className="mt-4 text-base/7 text-white/90">
-                                En{" "}
-                                <span className="font-semibold">
-                  H<span className="text-sm relative -top-[1px]">&</span>Q Hospital
-                </span>{" "}
-                                cuidamos lo que más importa, combinando atención humana y tecnología de vanguardia.
+                                En <span className="font-semibold">FuelIQ</span> optimizamos el abastecimiento, rastreamos consumo y reducimos pérdidas con datos en tiempo real y reportes accionables.
                             </p>
                         </CardContent>
                     </Card>
@@ -61,27 +57,26 @@ function Login() {
                     {/* HEADER SUPERIOR: título + logo (responsive) */}
                     <header className="flex flex-col items-center gap-3 mb-4 md:mb-6">
                         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-center">
-                            H<span className="text-sm relative -top-[1px]">&</span>Q Hospital
+                            FuelIQ
                         </h1>
 
                         {/* Contenedor circular: el logo cubre completamente */}
                         <div
                             className="
-                relative overflow-hidden rounded-full
+                relative overflow-hidden rounded-md
                 size-16 sm:size-20 md:size-24
-                border
-                border-[color-mix(in_oklab,var(--brand-1),transparent_45%)]
+                border border-border
                 bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)]
                 backdrop-blur-md shadow-sm
               "
                             aria-hidden
                         >
-                      <img
-  src={logo}
-  alt="H&Q"
-  draggable={false}
-  className="w-full h-full object-cover"
-/>
+                            <img
+                                src={logo}
+                                alt="FuelIQ Logo"
+                                draggable={false}
+                                className="w-full h-full object-contain p-1"
+                            />
 
                         </div>
                     </header>
@@ -92,8 +87,8 @@ function Login() {
                             <CardHeader className="px-0 pb-4">
                                 {/* (opcional) Subtítulo de la página */}
                                 <CardTitle className="mt-2 text-2xl sm:text-3xl md:text-4xl font-bold">
-                                    Iniciar sesión
-                                </CardTitle>
+                                        Iniciar sesión
+                                    </CardTitle>
                                 <CardDescription className="text-muted-foreground">
                                     Ingresa tus credenciales para acceder al sistema.
                                 </CardDescription>
@@ -114,7 +109,7 @@ function Login() {
                     </div>
 
                     <div className="pt-4 text-xs text-muted-foreground text-center md:text-left">
-                        © {new Date().getFullYear()} H&Q Hospital
+                        © {new Date().getFullYear()} FuelIQ
                     </div>
                 </div>
             </div>

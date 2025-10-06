@@ -120,18 +120,16 @@ export default function AdminSidebar() {
                         collapsed ? "justify-center px-0" : "",
                     ].join(" ")}
                 >
-                    <div className="relative grid size-9 shrink-0 rounded-xl overflow-hidden border border-[color-mix(in_oklab,var(--brand-1),transparent_55%)] bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)] backdrop-blur-md">
-                        <img src={logoUrl} alt="HQ" className="w-full h-full object-contain" />
+                    <div className="relative grid size-9 shrink-0 rounded-md overflow-hidden border border-border bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)] backdrop-blur-md">
+                        <img src={logoUrl} alt="FuelIQ Logo" className="w-full h-full object-contain p-1" />
                         <span
                             aria-hidden
-                            className="absolute inset-0 rounded-xl pointer-events-none [background:conic-gradient(from_20deg_at_50%_50%,color-mix(in_oklab,var(--brand-1),transparent_85%),color-mix(in_oklab,var(--brand-2),transparent_88%),color-mix(in_oklab,var(--brand-3),transparent_85%),color-mix(in_oklab,#8ad2ff,transparent_90%),color-mix(in_oklab,#ffd38a,transparent_90%),color-mix(in_oklab,var(--brand-2),transparent_88%))] mix-blend-screen opacity-70 [padding:1px] [-webkit-mask:linear-gradient(#000_0_0)_content-box,linear-gradient(#000_0_0)] [mask-composite:exclude] [-webkit-mask-composite:xor]"
+                            className="absolute inset-0 rounded-md pointer-events-none [background:conic-gradient(from_20deg_at_50%_50%,color-mix(in_oklab,var(--brand-1),transparent_85%),color-mix(in_oklab,var(--brand-2),transparent_88%),color-mix(in_oklab,var(--brand-3),transparent_85%),color-mix(in_oklab,#8ad2ff,transparent_90%),color-mix(in_oklab,#ffd38a,transparent_90%),color-mix(in_oklab,var(--brand-2),transparent_88%))] mix-blend-screen opacity-70 [padding:1px] [-webkit-mask:linear-gradient(#000_0_0)_content-box,linear-gradient(#000_0_0)] [mask-composite:exclude] [-webkit-mask-composite:xor]"
                         />
                     </div>
                     {!collapsed && (
                         <div className="leading-tight">
-                            <p className="text-[1.05rem] font-semibold tracking-tight">
-                                H<span className="text-sm relative -top-[1px]">&</span>Q Hospital
-                            </p>
+                            <p className="text-[1.05rem] font-semibold tracking-tight">FuelIQ</p>
                             <p className="text-[0.8rem] text-muted-foreground">Administración</p>
                         </div>
                     )}

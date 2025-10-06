@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  hospital_frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile-hospital-frontend
+      args:
+        - VITE_API_URL=http://localhost:8080
+    container_name: hospital_frontend
+    ports:
+      - "5174:80"
+    networks:
+      - hospital_network
+
+volumes:
+  hospital_data:
+
+networks:
+  hospital_network:
+    driver: bridge

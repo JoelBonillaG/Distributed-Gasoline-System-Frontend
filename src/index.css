@@ -1,0 +1,461 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@100..900&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+:root{
+    color-scheme:light;
+    --radius:.625rem;
+
+    /* Base */
+    --background:oklch(.99 .02 85);
+    --foreground:oklch(.23 .04 30);
+    --card:oklch(.995 .015 85);
+    --card-foreground:var(--foreground);
+    --popover:oklch(1 .015 85);
+    --popover-foreground:var(--foreground);
+    --border:oklch(.90 .02 85);
+    --input:oklch(.92 .02 85);
+    --ring:oklch(.78 .12 55);
+
+    /* Brand Fuel (naranjas energéticos) */
+    --brand-1:oklch(.92 .15 60);
+    --brand-2:oklch(.86 .18 50);
+    --brand-3:oklch(.78 .20 45);
+    --brand-veil:oklch(.97 .03 70);
+    --brand:var(--brand-2);
+    --brand-contrast:oklch(.17 .03 40);
+
+    /* shadcn tokens principales */
+    --primary:var(--brand);
+    --primary-foreground:oklch(.99 .01 85);
+    --secondary:oklch(.96 .03 95);
+    --secondary-foreground:oklch(.32 .03 40);
+    --accent:var(--brand-1);
+    --accent-foreground:var(--brand-contrast);
+    --muted:oklch(.95 .02 95);
+    --muted-foreground:oklch(.48 .03 40);
+    --destructive:oklch(.60 .19 27);
+
+    --primary-hover: color-mix(in oklab, var(--brand-2), white 16%);
+    --primary-active: color-mix(in oklab, var(--brand-3), black 8%);
+
+    /* Charts opcional */
+    --chart-1:oklch(.86 .19 48);
+    --chart-2:oklch(.74 .18 38);
+    --chart-3:oklch(.83 .17 64);
+    --chart-4:oklch(.71 .06 20);
+    --chart-5:oklch(.68 .08 80);
+
+    /* Sidebar */
+    --sidebar:oklch(.98 .015 85);
+    --sidebar-foreground:var(--foreground);
+    --sidebar-primary:var(--brand);
+    --sidebar-primary-foreground:oklch(.99 .01 85);
+    --sidebar-accent:oklch(.95 .02 90);
+    --sidebar-accent-foreground:oklch(.32 .03 40);
+    --sidebar-border:oklch(.88 .02 85);
+    --sidebar-ring:var(--ring);
+}
+
+@theme {
+    --font-sans: "Onest", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue",
+    Arial, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+@theme inline{
+    --radius-sm:calc(var(--radius) - 4px);
+    --radius-md:calc(var(--radius) - 2px);
+    --radius-lg:var(--radius);
+    --radius-xl:calc(var(--radius) + 4px);
+
+    --color-background:var(--background);
+    --color-foreground:var(--foreground);
+    --color-card:var(--card);
+    --color-card-foreground:var(--card-foreground);
+    --color-popover:var(--popover);
+    --color-popover-foreground:var(--popover-foreground);
+    --color-primary:var(--primary);
+    --color-primary-foreground:var(--primary-foreground);
+    --color-secondary:var(--secondary);
+    --color-secondary-foreground:var(--secondary-foreground);
+    --color-muted:var(--muted);
+    --color-muted-foreground:var(--muted-foreground);
+    --color-accent:var(--accent);
+    --color-accent-foreground:var(--accent-foreground);
+    --color-destructive:var(--destructive);
+    --color-border:var(--border);
+    --color-input:var(--input);
+    --color-ring:var(--ring);
+
+    --color-chart-1:var(--chart-1);
+    --color-chart-2:var(--chart-2);
+    --color-chart-3:var(--chart-3);
+    --color-chart-4:var(--chart-4);
+    --color-chart-5:var(--chart-5);
+
+    --color-sidebar:var(--sidebar);
+    --color-sidebar-foreground:var(--sidebar-foreground);
+    --color-sidebar-primary:var(--sidebar-primary);
+    --color-sidebar-primary-foreground:var(--sidebar-primary-foreground);
+    --color-sidebar-accent:var(--sidebar-accent);
+    --color-sidebar-accent-foreground:var(--sidebar-accent-foreground);
+    --color-sidebar-border:var(--sidebar-border);
+    --color-sidebar-ring:var(--sidebar-ring);
+
+    /* Para clases bg-brand / text-brand, etc. */
+    --color-brand:var(--brand);
+    --color-brand-1:var(--brand-1);
+    --color-brand-2:var(--brand-2);
+    --color-brand-3:var(--brand-3);
+    --color-brand-contrast:var(--brand-contrast);
+}
+
+.dark{
+    color-scheme:dark;
+    --background:oklch(.19 .02 255);
+    --foreground:oklch(.95 .01 90);
+    --card:oklch(.24 .02 255);
+    --card-foreground:var(--foreground);
+    --popover:oklch(.24 .02 255);
+    --popover-foreground:var(--foreground);
+    --border:oklch(.50 .02 260 / .24);
+    --input:oklch(.52 .02 260 / .26);
+    --ring:oklch(.72 .13 50);
+
+    --primary:oklch(.78 .20 48);
+    --primary-foreground:oklch(.11 .02 260);
+    --secondary:oklch(.28 .02 260);
+    --secondary-foreground:var(--foreground);
+    --accent:oklch(.70 .18 55);
+    --accent-foreground:oklch(.13 .02 255);
+    --muted:oklch(.30 .02 260);
+    --muted-foreground:oklch(.75 .02 260);
+    --destructive:oklch(.58 .19 27);
+
+    --primary-hover: color-mix(in oklab, var(--brand-2), black 12%);
+    --primary-active: color-mix(in oklab, var(--brand-3), black 22%);
+
+    --sidebar:oklch(.24 .02 255);
+    --sidebar-foreground:var(--foreground);
+    --sidebar-primary:var(--primary);
+    --sidebar-primary-foreground:var(--primary-foreground);
+
+    --brand-1:oklch(.82 .19 55);
+    --brand-2:oklch(.76 .21 48);
+    --brand-3:oklch(.68 .20 45);
+    --brand-veil:oklch(.35 .03 60);
+    --brand:var(--brand-2);
+    --brand-contrast:var(--foreground);
+}
+
+/* Base */
+@layer base{
+    *{@apply border-border outline-ring/50}
+    html,body,#root{height:100%}
+    body{@apply bg-background text-foreground antialiased font-sans}
+}
+
+#root{max-width:none!important;margin:0!important;padding:0!important;text-align:unset!important}
+body{display:block!important;place-items:initial!important;min-height:100vh}
+
+/* Utilidades visuales para el hero */
+@layer utilities{
+    .bg-hero-mint,
+    .bg-hero-fuel{
+        background-image:
+                radial-gradient(70% 140% at 100% -20%, color-mix(in oklab, var(--brand-2), transparent 70%) 0%, transparent 58%),
+                radial-gradient(82% 120% at -10% 120%, color-mix(in oklab, var(--brand-3), transparent 78%) 0%, transparent 62%),
+                linear-gradient(135deg, color-mix(in oklab, var(--brand-1), white 12%) 0%, var(--brand-2) 48%, color-mix(in oklab, var(--brand-3), black 4%) 100%);
+    }
+    .orb-mint,
+    .orb-fuel{background-image:radial-gradient(closest-side, color-mix(in oklab, var(--brand-2), white 22%) 0%, transparent 74%)}
+    .orb-mint-2,
+    .orb-fuel-2{background-image:radial-gradient(closest-side, color-mix(in oklab, var(--brand-3), white 18%) 0%, transparent 72%)}
+    .glass-edge{backdrop-filter:blur(4px) saturate(125%);background-color:color-mix(in oklab,var(--brand-veil),transparent 78%)}
+    .text-brand{color:var(--brand)}
+    .text-brand-contrast{color:var(--brand-contrast)}
+    .ring-brand{--tw-ring-color:color-mix(in oklab,var(--brand),transparent 45%)}
+    .card-glass{backdrop-filter:saturate(130%) blur(7px);background-color:color-mix(in oklab,var(--brand-veil),transparent 84%)}
+
+    .hero-surface{
+        border-radius:1rem;
+        border:1px solid color-mix(in oklab,var(--border),transparent 0%);
+        background-color:color-mix(in oklab,var(--card),transparent 8%);
+        backdrop-filter:blur(14px);
+    }
+
+    /* Botones legibles sobre el gradiente del hero */
+    .btn-hero{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        gap:.5rem;
+        padding:.65rem 1.4rem;
+        font-weight:600;
+        color:var(--foreground);
+        background-color:color-mix(in oklab,var(--brand),white 70%);
+        border-radius:calc(var(--radius-lg) + 6px);
+        border:1px solid color-mix(in oklab,var(--brand-2),transparent 40%);
+        box-shadow:0 1px 2px 0 rgba(12,12,12,.12),0 1px 1px -1px rgba(12,12,12,.22);
+    }
+    .btn-hero:hover{background-color:color-mix(in oklab,var(--brand),white 60%)}
+    .btn-hero-secondary{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        gap:.5rem;
+        padding:.65rem 1.4rem;
+        font-weight:600;
+        color:var(--foreground);
+        background-color:color-mix(in oklab,var(--background),white 8%);
+        border:1px solid color-mix(in oklab,var(--border),transparent 10%);
+        border-radius:calc(var(--radius-lg) + 6px);
+        box-shadow:0 1px 2px -1px rgba(12,12,12,.14);
+    }
+
+    /* Burbuja para el icono del título */
+    .title-bubble{
+        display:grid;
+        place-content:center;
+        border-radius:1rem;
+        color:var(--foreground);
+        gap:.25rem;
+        background-color:color-mix(in oklab,var(--brand-veil),white 6%);
+        border:1px solid color-mix(in oklab,var(--brand-1),transparent 58%);
+        box-shadow:0 10px 20px -16px rgba(12,12,12,.25);
+    }
+    .dark .title-bubble{background-color:color-mix(in oklab,var(--brand-veil),transparent 58%);border-color:color-mix(in oklab,var(--brand-1),transparent 40%);box-shadow:0 8px 24px -12px color-mix(in oklab,var(--brand-3),transparent 64%)}
+}
+
+/* --- Fondo decorado para el sidebar --- */
+.sidebar-surface {
+    position: relative;
+    background-color: var(--sidebar);
+    color: var(--sidebar-foreground);
+    overflow: hidden;
+}
+
+/* halo suave + velo mint */
+.sidebar-surface::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+            radial-gradient(700px 260px at 12% -8%, color-mix(in oklab, var(--brand-1), transparent 90%) 0%, transparent 60%),
+            radial-gradient(640px 220px at 110% 115%, color-mix(in oklab, var(--brand-3), transparent 92%) 0%, transparent 68%),
+            linear-gradient(180deg, color-mix(in oklab, var(--sidebar), transparent 0%) 0%, color-mix(in oklab, var(--sidebar), transparent 0%) 100%);
+}
+
+/* líneas entrecortadas horizontales, muy sutiles */
+.sidebar-surface::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+            repeating-linear-gradient(
+                    to bottom,
+                    transparent 0 36px,
+                    color-mix(in oklab, var(--brand-1), transparent 82%) 36px 37px
+            );
+    /* bordes laterales difuminados para que no "toquen" el contenido */
+    -webkit-mask-image: linear-gradient(to right, transparent 0 8px, #000 8px calc(100% - 8px), transparent calc(100% - 8px));
+    mask-image: linear-gradient(to right, transparent 0 8px, #000 8px calc(100% - 8px), transparent calc(100% - 8px));
+}
+
+/* asegura que el contenido quede encima del patrón */
+.sidebar-surface > * { position: relative; z-index: 1; }
+
+/* separadores del sidebar con estilo dashed */
+.sidebar-divider {
+    border-color: color-mix(in oklab, var(--brand-1), transparent 70%);
+    border-style: dashed;
+}
+
+/* etiqueta de grupo un poco más elegante */
+.sidebar-group-label {
+    font-size: .75rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--sidebar-foreground), transparent 35%);
+    letter-spacing: .02em;
+}
+
+
+@layer utilities {
+    /* ===== Liquid Glass – panel tipo píldora sobre el gradiente existente ===== */
+    .liquid-pill{
+        /* capa por encima del fondo */
+        position:absolute; inset:0;
+        border-radius: theme(--radius-xl);
+        isolation:isolate;                          /* aísla blending interno */
+        /* vidrio translúcido real, sin matar el fondo */
+        background: color-mix(in oklab, var(--brand-veil), transparent 86%);
+        -webkit-backdrop-filter: blur(18px) saturate(145%) contrast(108%);
+        backdrop-filter: blur(18px) saturate(145%) contrast(108%);
+        border: 1px solid color-mix(in oklab, var(--brand-veil), transparent 62%);
+        box-shadow:
+                0 1px 0 0 color-mix(in oklab, white, transparent 82%) inset, /* bisel superior */
+                0 0 0 1px color-mix(in oklab, var(--brand-veil), transparent 78%), /* halo exterior */
+                0 18px 40px -18px color-mix(in oklab, var(--brand-3), transparent 70%); /* caída */
+    }
+
+    /* Brillos “gel” arriba/abajo (specular + viñeta interna) */
+    .liquid-pill::before{
+        content:""; position:absolute; inset:0; border-radius:inherit; z-index:0; pointer-events:none;
+        background:
+                radial-gradient(120% 70% at 50% -20%,
+                color-mix(in oklab, white, transparent 72%) 0%,
+                transparent 60%),
+                radial-gradient(140% 90% at 50% 120%,
+                color-mix(in oklab, var(--brand-veil), transparent 88%) 0%,
+                transparent 60%);
+        /* suaviza hacia el centro */
+        mask: radial-gradient(180% 130% at 50% 50%, black 50%, transparent 100%);
+    }
+
+    /* Anillo de iridiscencia sólo en los bordes (look “prisma”) */
+    .liquid-pill::after{
+        --edge: 14px;                                /* grosor del anillo iridiscente */
+        content:""; position:absolute; inset:0; border-radius:inherit; z-index:1; pointer-events:none;
+
+        /* Gradiente con tonos del brand (muy tenues) + un poco de arcoíris */
+        background:
+                conic-gradient(from 15deg at 50% 50%,
+                color-mix(in oklab, var(--brand-1), transparent 86%),
+                color-mix(in oklab, var(--brand-2), transparent 88%),
+                color-mix(in oklab, var(--brand-3), transparent 86%),
+                color-mix(in oklab, #ffd38a, transparent 90%),
+                color-mix(in oklab, #8ad2ff, transparent 90%),
+                color-mix(in oklab, var(--brand-2), transparent 88%));
+
+        /* Deja visible SOLO el borde: truco con doble máscara (stroke) */
+        padding: var(--edge);
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+
+        mix-blend-mode: screen;         /* suma de luz sin “ensuciar” el fondo */
+        opacity: .75;
+        /* granulado sutil para “caustics” (ruido como máscara) */
+        background-blend-mode: screen;
+    }
+
+    /* Oscuro: vidrio un poco más denso */
+    .dark .liquid-pill{
+        background: color-mix(in oklab, var(--brand-veil), transparent 78%);
+        -webkit-backdrop-filter: blur(20px) saturate(150%) contrast(112%);
+        backdrop-filter: blur(20px) saturate(150%) contrast(112%);
+        border-color: color-mix(in oklab, var(--brand-veil), transparent 55%);
+        box-shadow:
+                0 1px 0 0 color-mix(in oklab, white, transparent 88%) inset,
+                0 0 0 1px color-mix(in oklab, var(--brand-veil), transparent 68%),
+                0 20px 44px -18px color-mix(in oklab, var(--brand-3), transparent 60%);
+    }
+
+    /* ===== (Opcional) Textura granular muy suave para el “frost” =====
+       Se aplica como capa extra si quieres más grano: añade <div class="liquid-grain" /> encima de .liquid-pill
+    =================================================================== */
+    .liquid-grain {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        z-index: 2;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200' preserveAspectRatio='none'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='table' tableValues='0 0 .04 .08 .1 0'/></feComponentTransfer></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+        mix-blend-mode: screen;
+        opacity: .45;
+    }
+}
+
+@layer utilities {
+    /* Tile cuadrado para el logo (borde + glass + halo sutil) */
+    .logo-tile{
+        position: relative;
+        display: grid;
+        place-content: center;
+        width: 36px; height: 36px; /* cuadrado */
+        border-radius: 10px;
+        background: color-mix(in oklab, var(--brand-veil), transparent 80%);
+        border: 1px solid color-mix(in oklab, var(--brand-1), transparent 55%);
+        -webkit-backdrop-filter: blur(10px) saturate(140%);
+        backdrop-filter: blur(10px) saturate(140%);
+        box-shadow:
+                0 1px 0 0 color-mix(in oklab, white, transparent 82%) inset,
+                0 6px 20px -8px color-mix(in oklab, var(--brand-3), transparent 75%);
+        overflow: hidden;
+        isolation: isolate;
+    }
+
+    /* el icono siempre centrado y sin “cuadrado del recurso” */
+    .logo-mark{
+        width: 18px; height: 18px; object-fit: contain; display: block;
+        filter: drop-shadow(0 1px 0 rgba(255,255,255,.35));
+    }
+
+    /* anillo/halo iridiscente muy tenue en los bordes */
+    .logo-ring{
+        position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+        background:
+                conic-gradient(from 20deg at 50% 50%,
+                color-mix(in oklab, var(--brand-1), transparent 85%),
+                color-mix(in oklab, var(--brand-2), transparent 88%),
+                color-mix(in oklab, var(--brand-3), transparent 85%),
+                color-mix(in oklab, #8ad2ff, transparent 90%),
+                color-mix(in oklab, #ffd38a, transparent 90%),
+                color-mix(in oklab, var(--brand-2), transparent 88%));
+        mix-blend-mode: screen;
+        opacity: .7;
+        /* mostrar SOLO borde: stroke falso con máscara */
+        padding: 1px; /* grosor del anillo */
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+    }
+
+    /* Resalte del header cuando está expandido (que “respire” más) */
+    .sidebar-surface > [data-sidebar=header]{
+        position: relative;
+    }
+    .sidebar-surface > [data-sidebar=header]::after{
+        content:""; position:absolute; inset: -2px -2px 0 -2px; z-index:0; pointer-events:none;
+        border-bottom: 1px dashed color-mix(in oklab, var(--brand-1), transparent 70%);
+        background:
+                radial-gradient(600px 200px at 120% -40%,
+                color-mix(in oklab, var(--brand-1), transparent 92%) 0%, transparent 70%) no-repeat,
+                radial-gradient(520px 160px at -20% 140%,
+                color-mix(in oklab, var(--brand-3), transparent 94%) 0%, transparent 72%) no-repeat;
+    }
+
+    /* Hover del header (tile “brilla” un poco) */
+    .group:hover .logo-tile{
+        box-shadow:
+                0 1px 0 0 color-mix(in oklab, white, transparent 78%) inset,
+                0 8px 24px -10px color-mix(in oklab, var(--brand-2), transparent 60%);
+        border-color: color-mix(in oklab, var(--brand-2), transparent 45%);
+    }
+
+    /* Modo oscuro: un pelín más denso */
+    .dark .logo-tile{
+        background: color-mix(in oklab, var(--brand-veil), transparent 72%);
+        border-color: color-mix(in oklab, var(--brand-1), transparent 45%);
+    }
+}
+

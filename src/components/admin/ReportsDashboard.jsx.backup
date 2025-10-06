@@ -1,0 +1,1018 @@
+import React, { useState, useEffect } from 'react';
+import { Calendar, FileText, TrendingUp, Users, Activity, Download, Eye, Filter, Stethoscope, Building2, BarChart3, RefreshCw } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
+import { Button } from '@/components/ui/shadcn/button';
+import { Input } from '@/components/ui/shadcn/input';
+import { Label } from '@/components/ui/shadcn/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/shadcn/select';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Badge } from '@/components/ui/shadcn/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/shadcn/tabs';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
+import reportsService from '../../services/reports.service';
+import specialtiesService from '../../services/specialties.service';
+import doctorsService from '../../services/doctors.service';
+import medicalCentersService from '../../services/medicalCenters.service';
+import PDFGenerator from '../../utils/pdfGenerator';
+import { format } from 'date-fns';
+
+// Colores optimizados para modo oscuro y claro
+const COLORS = {
+  primary: ['#3B82F6', '#1D4ED8', '#2563EB'],
+  success: ['#10B981', '#059669', '#047857'],
+  warning: ['#F59E0B', '#D97706', '#B45309'],
+  danger: ['#EF4444', '#DC2626', '#B91C1C'],
+  purple: ['#8B5CF6', '#7C3AED', '#6D28D9'],
+  cyan: ['#06B6D4', '#0891B2', '#0E7490'],
+  green: ['#84CC16', '#65A30D', '#4D7C0F'],
+  orange: ['#F97316', '#EA580C', '#C2410C']
+};
+
+const ReportsDashboard = () => {
+  const [loading, setLoading] = useState(false);
+  const [reportData, setReportData] = useState(null);
+  const [specialties, setSpecialties] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [medicalCenters, setMedicalCenters] = useState([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+  
+  const [filters, setFilters] = useState({
+    reportType: 'specialty',
+    startDate: '',
+    endDate: '',
+    specialtyId: 'ALL',
+    doctorId: 'ALL',
+    medicalCenterId: 'ALL',
+    // status: 'ALL' // Comentado - no manejado en BD
+  });
+
+  const [stats, setStats] = useState({
+    totalReports: 0,
+    totalConsultations: 0,
+    activeConsultations: 0,
+    completedConsultations: 0,
+    distinctSpecialties: 0,
+    doctorsInvolved: 0,
+    avgConsultationsPerDoctor: 0
+  });
+
+  // Cargar opciones para los filtros
+  useEffect(() => {
+    loadFilterOptions();
+  }, []);
+
+  const loadFilterOptions = async () => {
+    setLoadingOptions(true);
+    try {
+      const [specialtiesRes, doctorsRes, centersRes] = await Promise.all([
+        specialtiesService.listAllSpecialties(),
+        doctorsService.listAllDoctors(),
+        medicalCentersService.listAllCenters()
+      ]);
+      
+      setSpecialties(specialtiesRes || []);
+      setDoctors(doctorsRes || []);
+      setMedicalCenters(centersRes || []);
+    } catch (error) {
+      console.error('Error loading filter options:', error);
+    } finally {
+      setLoadingOptions(false);
+    }
+  };
+
+  const reportTypes = [
+    { value: 'specialty', label: 'Por Especialidad', icon: Activity },
+    { value: 'doctor', label: 'Por Médico', icon: Users },
+    { value: 'medical-center', label: 'Por Centro Médico', icon: FileText },
+    { value: 'monthly', label: 'Mensual', icon: TrendingUp }
+  ];
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => {
+      // Resetear filtros cuando cambia el tipo de reporte
+      if (key === 'reportType') {
+        return {
+          ...prev,
+          [key]: value,
+          specialtyId: value === 'specialty' ? prev.specialtyId : 'ALL',
+          doctorId: value === 'doctor' ? prev.doctorId : 'ALL',
+          medicalCenterId: value === 'medical-center' ? prev.medicalCenterId : 'ALL'
+          // status removido - no manejado en BD
+        };
+      }
+      
+      return {
+        ...prev,
+        [key]: value
+      };
+    });
+  };
+
+  const generateReport = async () => {
+    // Validaciones según el tipo de reporte
+    if (filters.reportType === 'specialty' && (filters.specialtyId === 'ALL' || !filters.specialtyId)) {
+      alert('Para el reporte por especialidad, debe seleccionar una especialidad específica.');
+      return;
+    }
+    
+    if (filters.reportType === 'doctor' && (filters.doctorId === 'ALL' || !filters.doctorId)) {
+      alert('Para el reporte por médico, debe seleccionar un médico específico.');
+      return;
+    }
+    
+    if (filters.reportType === 'medical-center' && (filters.medicalCenterId === 'ALL' || !filters.medicalCenterId)) {
+      alert('Para el reporte por centro médico, debe seleccionar un centro médico específico.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let response;
+      const filterData = {
+        ...filters,
+        startDate: filters.startDate || null,
+        endDate: filters.endDate || null,
+        // status: filters.status === 'ALL' ? null : filters.status, // Comentado - no manejado en BD
+        specialtyId: filters.specialtyId === 'ALL' ? null : filters.specialtyId,
+        doctorId: filters.doctorId === 'ALL' ? null : filters.doctorId,
+        medicalCenterId: filters.medicalCenterId === 'ALL' ? null : filters.medicalCenterId
+      };
+
+      switch (filters.reportType) {
+        case 'specialty':
+          response = await reportsService.getConsultationsBySpecialty(filterData);
+          break;
+        case 'doctor':
+          response = await reportsService.getConsultationsByDoctor(filterData);
+          break;
+        case 'medical-center':
+          response = await reportsService.getConsultationsByMedicalCenter(filterData);
+          break;
+        case 'monthly':
+          response = await reportsService.getConsultationsByMonth(filterData);
+          break;
+        default:
+          throw new Error('Tipo de reporte no válido');
+      }
+
+      setReportData(response);
+      
+      // Calcular estadísticas basadas en la estructura real de la respuesta
+      if (response && Array.isArray(response) && response.length > 0) {
+        const firstReport = response[0];
+        
+        // Extraer estadísticas del executiveSummary y KPIs
+        const executiveSummary = firstReport.executiveSummary || {};
+        const kpis = firstReport.kpis || {};
+        const specialtyStats = firstReport.specialtyStatistics || [];
+        const detailedConsultations = firstReport.detailedConsultations || [];
+        
+        // Contar consultas activas vs completadas
+        const activeCount = detailedConsultations.filter(c => c.status === 'ACTIVE').length;
+        const completedCount = detailedConsultations.filter(c => c.status === 'COMPLETED').length;
+        
+        setStats({
+          totalReports: specialtyStats.length,
+          totalConsultations: executiveSummary.totalConsultations || firstReport.totalConsultationsFound || 0,
+          activeConsultations: activeCount,
+          completedConsultations: completedCount,
+          distinctSpecialties: kpis.distinctSpecialties || 0,
+          doctorsInvolved: kpis.doctorsInvolved || 0,
+          avgConsultationsPerDoctor: kpis.avgConsultationsPerDoctor || 0
+        });
+      } else {
+        // Reset stats si no hay datos
+        setStats({
+          totalReports: 0,
+          totalConsultations: 0,
+          activeConsultations: 0,
+          completedConsultations: 0,
+          distinctSpecialties: 0,
+          doctorsInvolved: 0,
+          avgConsultationsPerDoctor: 0
+        });
+      }
+    } catch (error) {
+      console.error('Error al generar reporte:', error);
+      // Aquí podrías mostrar un toast o notificación de error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadPDF = () => {
+    if (!reportData) return;
+    
+    let doc;
+    const timestamp = format(new Date(), 'yyyy-MM-dd_HH-mm-ss');
+    
+    switch (filters.reportType) {
+      case 'specialty':
+        doc = PDFGenerator.generateSpecialtyReport(reportData, filters);
+        PDFGenerator.downloadPDF(doc, `reporte_especialidades_${timestamp}.pdf`);
+        break;
+      case 'doctor':
+        doc = PDFGenerator.generateDoctorReport(reportData, filters);
+        PDFGenerator.downloadPDF(doc, `reporte_medicos_${timestamp}.pdf`);
+        break;
+      default:
+        // Para otros tipos de reporte, usar el reporte general
+        doc = PDFGenerator.generateSpecialtyReport(reportData, filters);
+        PDFGenerator.downloadPDF(doc, `reporte_${filters.reportType}_${timestamp}.pdf`);
+    }
+  };
+
+  // const previewPDF = () => {
+  //   if (!reportData) return;
+  //   
+  //   let doc;
+  //   switch (filters.reportType) {
+  //     case 'specialty':
+  //       doc = PDFGenerator.generateSpecialtyReport(reportData, filters);
+  //       break;
+  //     case 'doctor':
+  //       doc = PDFGenerator.generateDoctorReport(reportData, filters);
+  //       break;
+  //     default:
+  //       doc = PDFGenerator.generateSpecialtyReport(reportData, filters);
+  //   }
+  //   
+  //   PDFGenerator.previewPDF(doc);
+  // };
+
+  const getChartData = () => {
+    if (!reportData || !Array.isArray(reportData) || reportData.length === 0) return [];
+    
+    const firstReport = reportData[0];
+    
+    // Para reportes por especialidad, usar specialtyStatistics
+    if (filters.reportType === 'specialty' && firstReport.specialtyStatistics) {
+      return firstReport.specialtyStatistics.map(item => ({
+        name: item.specialty || 'N/A',
+        total: item.totalConsultations || 0,
+        active: 0, // No disponible en esta estructura
+        completed: 0, // No disponible en esta estructura
+        uniquePatients: item.uniquePatients || 0,
+        uniqueDoctors: item.uniqueDoctors || 0,
+        avgPerDoctor: item.avgConsultationsPerDoctor || 0
+      }));
+    }
+    
+    // Para reportes por médico, usar topActiveDoctors
+    if (filters.reportType === 'doctor' && firstReport.topActiveDoctors) {
+      return firstReport.topActiveDoctors.map(item => ({
+        name: item.doctorName || 'N/A',
+        total: item.totalConsultations || 0,
+        active: 0,
+        completed: 0,
+        share: item.consultationShare || 0
+      }));
+    }
+    
+    // Para distribución semanal
+    if (firstReport.weeklyDistribution) {
+      return Object.entries(firstReport.weeklyDistribution).map(([day, count]) => ({
+        name: day,
+        total: count,
+        active: 0,
+        completed: 0
+      }));
+    }
+    
+    return [];
+  };
+
+  const getWeeklyDistributionData = () => {
+    if (!reportData || !Array.isArray(reportData) || reportData.length === 0) return [];
+    
+    const firstReport = reportData[0];
+    if (!firstReport.weeklyDistribution) return [];
+    
+    const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const daysSpanish = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+    
+    return daysOrder.map((day, index) => ({
+      day: daysSpanish[index],
+      consultations: firstReport.weeklyDistribution[day] || 0
+    }));
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard de Reportes</h1>
+          <p className="text-gray-600 mt-1">Genera y analiza reportes de consultas médicas</p>
+        </div>
+        <div className="flex space-x-2">
+          {reportData && (
+            <>
+              <Button
+                onClick={downloadPDF}
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
+              >
+                <Download className="h-4 w-4" />
+                <span>Descargar PDF</span>
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Estadísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Consultas</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalConsultations.toLocaleString()}</p>
+              </div>
+              <Activity className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Consultas Activas</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.activeConsultations.toLocaleString()}</p>
+              </div>
+              <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completadas</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.completedConsultations.toLocaleString()}</p>
+              </div>
+              <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Especialidades</p>
+                <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{stats.distinctSpecialties}</p>
+              </div>
+              <Stethoscope className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Médicos</p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.doctorsInvolved}</p>
+              </div>
+              <Users className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Promedio/Médico</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.avgConsultationsPerDoctor.toFixed(1)}</p>
+              </div>
+              <BarChart3 className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filtros y Generación */}
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Filter className="h-5 w-5" />
+            <span>Configuración del Reporte</span>
+            {loadingOptions && (
+              <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+            )}
+          </CardTitle>
+          <CardDescription className="dark:text-gray-400">
+            Selecciona los parámetros para generar tu reporte personalizado
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Primera fila - Configuración básica */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="reportType">Tipo de Reporte</Label>
+              <Select
+                value={filters.reportType}
+                onValueChange={(value) => handleFilterChange('reportType', value)}
+              >
+                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600">
+                  <SelectValue placeholder="Selecciona tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {reportTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <div className="flex items-center space-x-2">
+                        <type.icon className="h-4 w-4" />
+                        <span>{type.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Fecha Inicio</Label>
+              <Input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                className="dark:bg-gray-700 dark:border-gray-600"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="endDate">Fecha Fin</Label>
+              <Input
+                type="date"
+                value={filters.endDate}
+                onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                className="dark:bg-gray-700 dark:border-gray-600"
+              />
+            </div>
+
+            {/* Estado comentado - no manejado en BD 
+            <div className="space-y-2">
+              <Label htmlFor="status">Estado</Label>
+              <Select
+                value={filters.status}
+                onValueChange={(value) => handleFilterChange('status', value)}
+              >
+                <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600">
+                  <SelectValue placeholder="Todos los estados" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos</SelectItem>
+                  <SelectItem value="ACTIVE">Activo</SelectItem>
+                  <SelectItem value="COMPLETED">Completado</SelectItem>
+                  <SelectItem value="CANCELLED">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            */}
+          </div>
+
+          {/* Filtros dinámicos según tipo de reporte */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Especialidad - Obligatorio para reporte por especialidad */}
+            {(filters.reportType === 'specialty' || filters.reportType === 'doctor' || filters.reportType === 'monthly') && (
+              <div className="space-y-2">
+                <Label htmlFor="specialtyId">
+                  Especialidad {filters.reportType === 'specialty' ? '*' : '(Opcional)'}
+                </Label>
+                <Select
+                  value={filters.specialtyId}
+                  onValueChange={(value) => handleFilterChange('specialtyId', value)}
+                  disabled={loadingOptions}
+                >
+                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600">
+                    <SelectValue placeholder={filters.reportType === 'specialty' ? "Seleccionar especialidad" : "Todas las especialidades"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filters.reportType !== 'specialty' && (
+                      <SelectItem value="ALL">Todas las especialidades</SelectItem>
+                    )}
+                    {specialties.map((specialty) => (
+                      <SelectItem key={specialty.id} value={specialty.id.toString()}>
+                        <div className="flex items-center space-x-2">
+                          <Stethoscope className="h-4 w-4" />
+                          <span>{specialty.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Médico - Obligatorio para reporte por médico */}
+            {filters.reportType === 'doctor' && (
+              <div className="space-y-2">
+                <Label htmlFor="doctorId">Médico *</Label>
+                <Select
+                  value={filters.doctorId}
+                  onValueChange={(value) => handleFilterChange('doctorId', value)}
+                  disabled={loadingOptions}
+                >
+                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600">
+                    <SelectValue placeholder="Seleccionar médico" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {doctors.map((doctor) => (
+                      <SelectItem key={doctor.id} value={doctor.id.toString()}>
+                        <div className="flex items-center space-x-2">
+                          <Users className="h-4 w-4" />
+                          <span>Dr. {doctor.user?.firstName ? `${doctor.user.firstName} ${doctor.user.lastName}` : doctor.name || `Médico ${doctor.id}`}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Centro Médico - Obligatorio para reporte por centro médico */}
+            {filters.reportType === 'medical-center' && (
+              <div className="space-y-2">
+                <Label htmlFor="medicalCenterId">Centro Médico *</Label>
+                <Select
+                  value={filters.medicalCenterId}
+                  onValueChange={(value) => handleFilterChange('medicalCenterId', value)}
+                  disabled={loadingOptions}
+                >
+                  <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600">
+                    <SelectValue placeholder="Seleccionar centro médico" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {medicalCenters.map((center) => (
+                      <SelectItem key={center.id} value={center.id.toString()}>
+                        <div className="flex items-center space-x-2">
+                          <Building2 className="h-4 w-4" />
+                          <span>{center.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center">
+            <Button
+              onClick={generateReport}
+              disabled={loading}
+              className="px-8 py-2 bg-blue-600 hover:bg-blue-700"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Generar Reporte
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Visualización de Datos */}
+      {reportData && (
+        <Tabs defaultValue="chart" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="chart">Gráficos</TabsTrigger>
+            <TabsTrigger value="table">Tabla</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="chart" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Gráfico de Barras Principal */}
+              <Card className="dark:bg-gray-800 dark:border-gray-700">
+                <CardHeader>
+                  <CardTitle className="dark:text-white">
+                    {filters.reportType === 'specialty' ? 'Consultas por Especialidad' : 
+                     filters.reportType === 'doctor' ? 'Consultas por Médico' : 
+                     'Distribución de Consultas'}
+                  </CardTitle>
+                  <CardDescription className="dark:text-gray-400">
+                    Comparativa por categoría
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={getChartData()}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        stroke="#6B7280"
+                      />
+                      <YAxis tick={{ fill: '#6B7280' }} stroke="#6B7280" />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1F2937', 
+                          border: '1px solid #374151',
+                          borderRadius: '8px',
+                          color: '#F9FAFB'
+                        }}
+                      />
+                      <Bar dataKey="total" fill="#3B82F6" name="Total Consultas" radius={[4, 4, 0, 0]} />
+                      {filters.reportType === 'specialty' && (
+                        <>
+                          <Bar dataKey="uniquePatients" fill="#10B981" name="Pacientes Únicos" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="uniqueDoctors" fill="#F59E0B" name="Médicos Únicos" radius={[4, 4, 0, 0]} />
+                        </>
+                      )}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Gráfico Circular */}
+              <Card className="dark:bg-gray-800 dark:border-gray-700">
+                <CardHeader>
+                  <CardTitle className="dark:text-white">Distribución Porcentual</CardTitle>
+                  <CardDescription className="dark:text-gray-400">Proporción por categoría</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={getChartData()}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="total"
+                      >
+                        {getChartData().map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={Object.values(COLORS).flat()[index % Object.values(COLORS).flat().length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1F2937', 
+                          border: '1px solid #374151',
+                          borderRadius: '8px',
+                          color: '#F9FAFB'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Distribución Semanal */}
+              <Card className="dark:bg-gray-800 dark:border-gray-700">
+                <CardHeader>
+                  <CardTitle className="dark:text-white">Distribución Semanal</CardTitle>
+                  <CardDescription className="dark:text-gray-400">Consultas por día de la semana</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={getWeeklyDistributionData()}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                        stroke="#6B7280"
+                      />
+                      <YAxis tick={{ fill: '#6B7280' }} stroke="#6B7280" />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1F2937', 
+                          border: '1px solid #374151',
+                          borderRadius: '8px',
+                          color: '#F9FAFB'
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="consultas" 
+                        stroke="#8B5CF6" 
+                        fill="#8B5CF6" 
+                        fillOpacity={0.6}
+                        name="Consultas"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {/* Top Médicos Activos */}
+              {reportData && reportData[0]?.topActiveDoctors && (
+                <Card className="dark:bg-gray-800 dark:border-gray-700">
+                  <CardHeader>
+                    <CardTitle className="dark:text-white">Top Médicos Activos</CardTitle>
+                    <CardDescription className="dark:text-gray-400">Médicos con más consultas</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {reportData[0].topActiveDoctors.slice(0, 5).map((doctor, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
+                              index === 0 ? 'bg-yellow-500' : 
+                              index === 1 ? 'bg-gray-400' : 
+                              index === 2 ? 'bg-orange-600' : 'bg-blue-500'
+                            }`}>
+                              {index + 1}
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">{doctor.doctorName}</p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {doctor.consultationShare?.toFixed(1)}% del total
+                              </p>
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="dark:border-gray-600">
+                            {doctor.totalConsultations} consultas
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="table">
+            <div className="space-y-6">
+              {/* Tabla dinámica según tipo de reporte */}
+              {reportData && reportData.length > 0 && (
+                <>
+                  {/* Tabla para reporte por especialidad */}
+                  {filters.reportType === 'specialty' && reportData[0]?.specialtyStatistics && (
+                    <Card className="dark:bg-gray-800 dark:border-gray-700">
+                      <CardHeader>
+                        <CardTitle className="dark:text-white">Estadísticas por Especialidad</CardTitle>
+                        <CardDescription className="dark:text-gray-400">Información detallada de especialidades médicas</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse border border-gray-300 dark:border-gray-600">
+                            <thead>
+                              <tr className="bg-gray-50 dark:bg-gray-700">
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left dark:text-white">Especialidad</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Total Consultas</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Pacientes Únicos</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Médicos Únicos</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Promedio/Médico</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {reportData[0].specialtyStatistics.map((item, index) => (
+                                <tr key={index} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'}>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 font-medium dark:text-white">
+                                    {item.specialty}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {item.totalConsultations?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {item.uniquePatients?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {item.uniqueDoctors?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+                                    <Badge variant="outline" className="dark:border-gray-500 dark:text-gray-300">
+                                      {item.avgConsultationsPerDoctor?.toFixed(1)}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Tabla para reporte por médico */}
+                  {filters.reportType === 'doctor' && reportData[0]?.topActiveDoctors && (
+                    <Card className="dark:bg-gray-800 dark:border-gray-700">
+                      <CardHeader>
+                        <CardTitle className="dark:text-white">Estadísticas por Médico</CardTitle>
+                        <CardDescription className="dark:text-gray-400">Información detallada de médicos</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse border border-gray-300 dark:border-gray-600">
+                            <thead>
+                              <tr className="bg-gray-50 dark:bg-gray-700">
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left dark:text-white">Médico</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left dark:text-white">Especialidad</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Total Consultas</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Pacientes Únicos</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Eficiencia</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {reportData[0].topActiveDoctors.map((doctor, index) => (
+                                <tr key={index} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'}>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 font-medium dark:text-white">
+                                    {doctor.doctorName}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 dark:text-gray-300">
+                                    {doctor.specialty}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {doctor.totalConsultations?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {doctor.uniquePatients?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+                                    <Badge variant="outline" className="dark:border-gray-500 dark:text-gray-300">
+                                      {doctor.efficiency?.toFixed(1)}%
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Tabla para reporte por centro médico */}
+                  {filters.reportType === 'medical-center' && reportData[0]?.medicalCenterStatistics && (
+                    <Card className="dark:bg-gray-800 dark:border-gray-700">
+                      <CardHeader>
+                        <CardTitle className="dark:text-white">Estadísticas por Centro Médico</CardTitle>
+                        <CardDescription className="dark:text-gray-400">Información detallada de centros médicos</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse border border-gray-300 dark:border-gray-600">
+                            <thead>
+                              <tr className="bg-gray-50 dark:bg-gray-700">
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left dark:text-white">Centro Médico</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Total Consultas</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Pacientes Únicos</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Médicos Activos</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Promedio/Día</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {reportData[0].medicalCenterStatistics.map((center, index) => (
+                                <tr key={index} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'}>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 font-medium dark:text-white">
+                                    {center.centerName}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {center.totalConsultations?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {center.uniquePatients?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {center.activeDoctors?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+                                    <Badge variant="outline" className="dark:border-gray-500 dark:text-gray-300">
+                                      {center.avgConsultationsPerDay?.toFixed(1)}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Tabla para reporte mensual */}
+                  {filters.reportType === 'monthly' && reportData[0]?.monthlyStatistics && (
+                    <Card className="dark:bg-gray-800 dark:border-gray-700">
+                      <CardHeader>
+                        <CardTitle className="dark:text-white">Estadísticas Mensuales</CardTitle>
+                        <CardDescription className="dark:text-gray-400">Información detallada mensual</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse border border-gray-300 dark:border-gray-600">
+                            <thead>
+                              <tr className="bg-gray-50 dark:bg-gray-700">
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left dark:text-white">Período</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Total Consultas</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Pacientes Únicos</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Especialidades</th>
+                                <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Crecimiento</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {reportData[0].monthlyStatistics.map((month, index) => (
+                                <tr key={index} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'}>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 font-medium dark:text-white">
+                                    {month.period}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {month.totalConsultations?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {month.uniquePatients?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                    {month.specialtyCount?.toLocaleString()}
+                                  </td>
+                                  <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center">
+                                    <Badge 
+                                      variant={month.growth >= 0 ? "default" : "destructive"} 
+                                      className="dark:border-gray-500 dark:text-gray-300"
+                                    >
+                                      {month.growth >= 0 ? '+' : ''}{month.growth?.toFixed(1)}%
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              )}
+
+              {/* Consultas Detalladas */}
+              {reportData && reportData[0]?.detailedConsultations && (
+                <Card className="dark:bg-gray-800 dark:border-gray-700">
+                  <CardHeader>
+                    <CardTitle className="dark:text-white">Consultas Detalladas</CardTitle>
+                    <CardDescription className="dark:text-gray-400">Listado completo de consultas</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse border border-gray-300 dark:border-gray-600">
+                        <thead>
+                          <tr className="bg-gray-50 dark:bg-gray-700">
+                            <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left dark:text-white">Paciente</th>
+                            <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left dark:text-white">Médico</th>
+                            <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left dark:text-white">Especialidad</th>
+                            <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-white">Fecha</th>
+                            <th className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-left dark:text-white">Diagnóstico</th>
+                            {/* Estado comentado - no manejado en BD */}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {reportData[0].detailedConsultations.slice(0, 10).map((consultation, index) => (
+                            <tr key={index} className={index % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700'}>
+                              <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 font-medium dark:text-white">
+                                {consultation.patientName}
+                              </td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 dark:text-gray-300">
+                                {consultation.doctorName}
+                              </td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 dark:text-gray-300">
+                                {consultation.specialty}
+                              </td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 text-center dark:text-gray-300">
+                                {new Date(consultation.consultationDate).toLocaleDateString()}
+                              </td>
+                              <td className="border border-gray-300 dark:border-gray-600 px-4 py-2 dark:text-gray-300 text-sm">
+                                {consultation.diagnosis || consultation.notes || 'Sin diagnóstico'}
+                              </td>
+                              {/* Estado comentado - no manejado en BD */}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {reportData[0].detailedConsultations.length > 10 && (
+                      <div className="mt-4 text-center">
+                        <Badge variant="outline" className="dark:border-gray-500 dark:text-gray-300">
+                          Mostrando 10 de {reportData[0].detailedConsultations.length} consultas
+                        </Badge>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Analytics section oculta - existe página separada para Analytics */}
+        </Tabs>
+      )}
+    </div>
+  );
+};
+
+export default ReportsDashboard;

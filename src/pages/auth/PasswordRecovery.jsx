@@ -37,7 +37,7 @@ function PasswordRecovery() {
     }
   };
 
-  const AUTH_BG = "/assets/auth-bg.avif";
+  const AUTH_BG = "/assets/background.webp";
 
   return (
     <div className="relative min-h-dvh overflow-hidden">
@@ -74,13 +74,13 @@ function PasswordRecovery() {
           {/* Header */}
           <header className="flex flex-col items-center gap-3 mb-4 md:mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-center">
-              H<span className="text-sm relative -top-[1px]">&</span>Q Hospital
+              FuelIQ
             </h1>
-            <div className="relative overflow-hidden rounded-full size-16 sm:size-20 md:size-24 border bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)] backdrop-blur-md shadow-sm">
+            <div className="relative overflow-hidden rounded-md size-16 sm:size-20 md:size-24 border bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)] backdrop-blur-md shadow-sm">
               <img
                 src={logo}
-                alt="H&Q"
-                className="w-full h-full object-cover"
+                alt="FuelIQ Logo"
+                className="w-full h-full object-contain p-1"
                 draggable={false}
               />
             </div>
@@ -145,7 +145,7 @@ function PasswordRecovery() {
           </div>
 
           <div className="pt-4 text-xs text-muted-foreground text-center md:text-left">
-            © {new Date().getFullYear()} H&Q Hospital
+            © {new Date().getFullYear()} FuelIQ
           </div>
         </div>
       </div>

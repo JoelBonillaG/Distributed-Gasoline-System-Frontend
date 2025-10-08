@@ -67,8 +67,7 @@ function Login() {
               className="
                 relative overflow-hidden rounded-full
                 size-16 sm:size-20 md:size-24
-                border
-                border-[color-mix(in_oklab,var(--brand-1),transparent_45%)]
+                border border-border
                 bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)]
                 backdrop-blur-md shadow-sm
               "

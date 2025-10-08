@@ -4,23 +4,36 @@ import { clearTokens, setAccessToken } from "@/utils/tokenStorage";
 const baseUrl = import.meta.env.VITE_API_URL;
 
 const authService = {
-  // Login con DNI y contraseña
-  login: async (dni, password) => {
-    const response = await api.post("/auth/login", {
-      username: dni,
-      password,
+  login: async (email, password) => {
+    const response = await fetch(`${baseUrl}/auth/log-in`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
 
-    const data = response.data;
+    const data = await response.json();
+    if (data?.statusCode && data.statusCode !== 200) {
+      throw {
+        success: false,
+        errorData: {
+          statusCode: data.statusCode,
+          message: data.message,
+          code: data.code,
+          grpc: data.grpc,
+          details: data.details,
+          errors: data.errors,
+        },
+      };
+    }
 
-    if (data?.token) {
-      setAccessToken(data.token);
+    if (data?.accessToken) {
+      setAccessToken(data.accessToken);
     }
 
     return data;
   },
 
-  // Logout (solo cliente, no llama backend)
+  // Logout (solo limpia el almacenamiento local)
   logout: async () => {
     clearTokens();
     return { success: true };
@@ -28,7 +41,7 @@ const authService = {
 
   // Obtener perfil del usuario autenticado
   getProfile: async () => {
-    const response = await api.get(`${baseUrl}/auth/users/me`);
+    const response = await api.get(`${baseUrl}/auth/me`);
     return response.data;
   },
 };

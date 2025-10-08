@@ -29,8 +29,10 @@ function RoleBasedHome() {
   const roles = Array.isArray(user?.roles)
     ? user.roles.map((r) => String(r).toUpperCase())
     : [];
-  if (roles.includes("ADMIN")) return <Navigate to="/admin/reports" replace />;
-  if (roles.includes("DOCTOR")) return <Navigate to="/consultations" replace />;
+
+  console.log("🧱 User roles:", roles);
+  if (roles.includes("ADMIN"))
+    return <Navigate to="/admin/playground" replace />;
   return <Navigate to="/forbidden" replace />;
 }
 
@@ -45,8 +47,8 @@ export default function App() {
             <Route path="/password-recovery" element={<PasswordRecovery />} />
             <Route path="/reset" element={<ResetPassword />} />
             <Route element={<AdminLayout />}>
-              <Route path="/admin/playground" element={<Playground />} /></Route>
-           
+              <Route path="/admin/playground" element={<Playground />} />
+            </Route>
           </Route>
 
           {/* Bloque protegido: requiere login */}
@@ -58,21 +60,7 @@ export default function App() {
 
               {/* --- ADMIN ONLY --- */}
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-                <Route path="/admin/reports" element={<ReportsDashboard />} />
-                <Route path="/admin/reports/export" element={<ReportsExport />} />
-                <Route path="/admin/employees" element={<EmployeesPage />} />
-                <Route path="/admin/centers" element={<MedicalCentersPage />} />
-                <Route path="/admin/specialties" element={<SpecialtiesPage />} />
-                <Route path="/admin/doctors" element={<DoctorsPage />} />
-                <Route path="/admin/playground" element={<Playground />} />
-              </Route>
-
-              {/* --- DOCTOR ONLY --- */}
-              <Route element={<ProtectedRoute allowedRoles={["DOCTOR"]} />}>
-                <Route path="/patients" element={<PatientsPage />} />
-                <Route path="/consultations" element={<MedicalConsultationsPage />} />
-                <Route path="/consultations/form" element={<MedicalConsultationFormPage />} />
-                <Route path="/specialties-offer" element={<SpecialtiesOfferPage />} />
+                <Route path="/admin/" element={<Playground />} />
               </Route>
             </Route>
           </Route>

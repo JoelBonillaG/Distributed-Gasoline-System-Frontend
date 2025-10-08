@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (dni, password) => {
     try {
       const data = await authService.login(dni, password);
-      const token = data?.token;
+      const token = data?.accessToken;
       const profile =
         data?.user ??
         (token
@@ -62,20 +62,14 @@ export const AuthProvider = ({ children }) => {
       setAccessToken(token);
       setUser(profile);
       setIsAuthenticated(true);
-
       return { success: true, user: profile };
     } catch (error) {
       clearTokens();
       setUser(null);
       setIsAuthenticated(false);
-      console.error("Login failed:", error?.message || error);
       return {
         success: false,
-        message:
-          error?.response?.data?.message ||
-          error?.message ||
-          "Error de inicio de sesión",
-        errorData: error?.response?.data ?? null,
+        errorData: error?.errorData ?? null,
       };
     }
   };

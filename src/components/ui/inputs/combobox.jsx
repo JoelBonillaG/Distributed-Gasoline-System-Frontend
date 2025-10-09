@@ -16,29 +16,38 @@ import {
     CommandGroup,
     CommandItem,
 } from "@/components/ui/shadcn/command.jsx";
+import { cn } from "@/lib/utils";
 
 /**
  * Combobox simple (single select)
  * props:
  *  - options: { value: string, label: string }[]
  *  - value: string | undefined
- *  - onChange: (value: string) => void
+ *  - onValueChange: (value: string) => void
  *  - placeholder?: string
  *  - emptyText?: string
+ *  - searchPlaceholder?: string
  *  - disabled?: boolean
  *  - className?: string
+ *  - maxVisibleOptions?: number
  */
 export function Combobox({
-                             options = [],
-                             value,
-                             onChange,
-                             placeholder = "Selecciona…",
-                             emptyText = "Sin resultados.",
-                             disabled = false,
-                             className = "",
-                         }) {
+    options = [],
+    value,
+    onValueChange,
+    onChange, // backward compatibility
+    placeholder = "Selecciona…",
+    emptyText = "Sin resultados.",
+    searchPlaceholder = "Buscar…",
+    disabled = false,
+    className = "",
+    maxVisibleOptions = 8,
+}) {
     const [open, setOpen] = React.useState(false);
     const selected = options.find((o) => o.value === value);
+
+    // Usar onValueChange si está disponible, sino usar onChange
+    const handleChange = onValueChange || onChange;
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -49,19 +58,47 @@ export function Combobox({
                     role="combobox"
                     aria-expanded={open}
                     disabled={disabled}
-                    className={`w-full justify-between ${className}`}
+                    className={cn(
+                        "w-full justify-between font-normal",
+                        "hover:bg-orange-50 hover:border-orange-300",
+                        "focus:ring-2 focus:ring-orange-400 focus:border-orange-400",
+                        selected &&
+                            "text-orange-700 border-orange-300 bg-orange-50/50",
+                        className
+                    )}
                 >
-          <span className="truncate">
-            {selected ? selected.label : placeholder}
+          <span className="truncate text-left flex-1">
+            {selected ? selected.label : (
+                <span className="text-muted-foreground">{placeholder}</span>
+            )}
           </span>
-                    <ChevronsUpDown className="ml-2 size-4 opacity-50" />
+                    <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
 
-            <PopoverContent className="p-0 w-[240px]">
-                <Command>
-                    <CommandInput placeholder="Buscar…" />
-                    <CommandList>
+            <PopoverContent
+                className="p-0 w-[--radix-popover-trigger-width] min-w-[400px]"
+                align="start"
+                sideOffset={4}
+            >
+                <Command
+                    filter={(value, search) => {
+                        // Custom filter para búsqueda más flexible
+                        const normalizedSearch = search.toLowerCase();
+                        const normalizedValue = value.toLowerCase();
+                        if (normalizedValue.includes(normalizedSearch)) return 1;
+                        return 0;
+                    }}
+                >
+                    <CommandInput
+                        placeholder={searchPlaceholder}
+                        className="border-b"
+                    />
+                    <CommandList
+                        style={{
+                            maxHeight: `${maxVisibleOptions * 40}px`,
+                        }}
+                    >
                         <CommandEmpty>{emptyText}</CommandEmpty>
                         <CommandGroup>
                             {options.map((opt) => {
@@ -70,15 +107,26 @@ export function Combobox({
                                     <CommandItem
                                         key={opt.value}
                                         value={opt.label}
+                                        keywords={[opt.label, opt.value]}
                                         onSelect={() => {
-                                            onChange?.(opt.value);
+                                            handleChange?.(opt.value);
                                             setOpen(false);
                                         }}
+                                        className={cn(
+                                            "cursor-pointer",
+                                            "aria-selected:bg-orange-100 aria-selected:text-orange-900",
+                                            isActive && "bg-orange-50 text-orange-800"
+                                        )}
                                     >
                                         <Check
-                                            className={`mr-2 size-4 ${isActive ? "opacity-100" : "opacity-0"}`}
+                                            className={cn(
+                                                "mr-2 size-4",
+                                                isActive
+                                                    ? "opacity-100 text-orange-600"
+                                                    : "opacity-0"
+                                            )}
                                         />
-                                        {opt.label}
+                                        <span className="flex-1">{opt.label}</span>
                                     </CommandItem>
                                 );
                             })}

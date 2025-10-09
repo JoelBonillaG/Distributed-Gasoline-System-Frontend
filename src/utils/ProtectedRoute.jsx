@@ -26,6 +26,8 @@ export function ProtectedRoute({
   const { user, isLoading, isAuthenticated } = useAuth();
   const location = useLocation();
 
+  console.log(user);
+
   if (isLoading) return fallback;
 
   if (!isAuthenticated) {

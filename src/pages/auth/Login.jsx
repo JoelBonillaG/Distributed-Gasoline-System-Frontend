@@ -58,26 +58,18 @@ function Login() {
           {/* HEADER SUPERIOR: título + logo (responsive) */}
           <header className="flex flex-col items-center gap-3 mb-4 md:mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-center">
-              F<span className="text-sm relative -top-[1px]">&</span>Q
-              Combustible
+              FuelIQ
             </h1>
-
-            {/* Contenedor circular: el logo cubre completamente */}
             <div
-              className="
-                relative overflow-hidden rounded-full
-                size-16 sm:size-20 md:size-24
-                border border-border
-                bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)]
-                backdrop-blur-md shadow-sm
-              "
-              aria-hidden
+              className="relative overflow-hidden rounded-md size-16 sm:size-20 md:size-24 border 
+               bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)] 
+               backdrop-blur-md shadow-sm"
             >
               <img
                 src={logo}
-                alt="H&Q"
+                alt="FuelIQ Logo"
+                className="w-full h-full object-contain p-1"
                 draggable={false}
-                className="w-full h-full object-cover"
               />
             </div>
           </header>
@@ -101,7 +93,21 @@ function Login() {
 
               <CardFooter className="px-0">
                 <div className="ml-auto">
-                  <Button asChild variant="link" className="p-0 text-primary">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="
+    p-0
+    text-[#F97316]
+    font-medium
+    transition-all
+    duration-700
+    ease-out
+    drop-shadow-[0_0_4px_rgba(249,115,22,0.35)]
+    hover:text-[#FB923C]
+    hover:drop-shadow-[0_0_10px_rgba(249,115,22,0.7)]
+  "
+                  >
                     <Link to="/password-recovery">
                       ¿Olvidaste tu contraseña?
                     </Link>
@@ -112,7 +118,7 @@ function Login() {
           </div>
 
           <div className="pt-4 text-xs text-muted-foreground text-center md:text-left">
-            © {new Date().getFullYear()} F&Q Hospital
+            © {new Date().getFullYear()} FuelIQ
           </div>
         </div>
       </div>

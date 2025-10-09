@@ -50,7 +50,7 @@ export default function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/password-recovery" element={<PasswordRecovery />} />
-            <Route path="/reset" element={<ResetPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route element={<AdminLayout />}>
               <Route path="/admin/playground" element={<Playground />} />
             </Route>

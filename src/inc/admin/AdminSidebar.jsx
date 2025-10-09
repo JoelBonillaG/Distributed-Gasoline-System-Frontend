@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import {
   Sidebar,
   SidebarHeader,
@@ -14,8 +14,8 @@ import {
   useSidebar,
 } from "@/components/ui/shadcn/sidebar";
 import { Avatar } from "@/components/ui/shadcn/avatar";
-import { FolderKanban, BookText, BarChart3, TestTube2 } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { FolderKanban, BookText, BarChart3, TestTube2, Car, ChevronDown } from "lucide-react";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import logoUrl from "@/assets/favicon.ico";
 import AuthContext from "@/context/AuthContext";
 import {
@@ -25,6 +25,11 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/shadcn/dropdown-menu";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/shadcn/collapsible";
 import Can from "@/utils/Can.jsx";
 
 function NavItem({ to, icon: Icon, label, collapsed, end = false }) {
@@ -65,6 +70,110 @@ function NavItem({ to, icon: Icon, label, collapsed, end = false }) {
         </NavLink>
       </SidebarMenuButton>
     </SidebarMenuItem>
+  );
+}
+
+function VehiclesCollapsibleMenu({ collapsed }) {
+  const location = useLocation();
+  const isVehiclesActive = location.pathname.startsWith("/vehicles");
+  const [isOpen, setIsOpen] = useState(isVehiclesActive);
+
+  // Si el sidebar está colapsado, mostramos solo el ícono sin collapsible
+  if (collapsed) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          asChild
+          tooltip="Vehículos"
+          className="justify-center px-0"
+        >
+          <NavLink
+            to="/vehicles/models"
+            aria-label="Vehículos"
+            className="group relative w-full grid place-items-center rounded-lg px-0 py-0.5"
+          >
+            <span
+              className={[
+                "grid size-7 place-content-center shrink-0 rounded-md mx-0 my-0",
+                "bg-transparent hover:bg-brand-1/25",
+                isVehiclesActive
+                  ? "bg-accent text-accent-foreground"
+                  : "",
+              ].join(" ")}
+            >
+              <Car className="size-3.5 shrink-0" />
+            </span>
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            className={[
+              "w-full flex items-center justify-between gap-2 rounded-lg px-2 py-2 hover:bg-muted/60 text-foreground/90",
+              // Solo aplicar estilos activos cuando está cerrado
+              isVehiclesActive && !isOpen
+                ? "bg-accent text-accent-foreground ring-1 ring-brand/20 before:absolute before:left-[-6px] before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-full before:bg-brand"
+                : "",
+            ].join(" ")}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className={[
+                  "grid size-7 place-content-center shrink-0 rounded-md",
+                  "bg-transparent hover:bg-brand-1/25",
+                  isVehiclesActive && !isOpen ? "bg-brand-1/40" : "",
+                ].join(" ")}
+              >
+                <Car className="size-4 shrink-0" />
+              </span>
+              <span className="truncate">Vehículos</span>
+            </div>
+            <ChevronDown
+              className={`size-4 shrink-0 transition-transform duration-200 ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pl-9 pt-1 space-y-1 relative">
+          {/* Línea vertical al lado de las opciones */}
+          <div className="absolute left-[26px] top-2 bottom-2 w-[2px] bg-border/50" />
+
+          <NavLink
+            to="/vehicles/models"
+            className={({ isActive }) =>
+              [
+                "block rounded-md px-3 py-1.5 text-sm hover:bg-muted/60 transition-colors relative",
+                isActive
+                  ? "bg-muted text-foreground font-medium"
+                  : "text-foreground/80",
+              ].join(" ")
+            }
+          >
+            Modelos
+          </NavLink>
+          <NavLink
+            to="/vehicles/units"
+            className={({ isActive }) =>
+              [
+                "block rounded-md px-3 py-1.5 text-sm hover:bg-muted/60 transition-colors relative",
+                isActive
+                  ? "bg-muted text-foreground font-medium"
+                  : "text-foreground/80",
+              ].join(" ")
+            }
+          >
+            Unidades
+          </NavLink>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
   );
 }
 
@@ -172,6 +281,10 @@ export default function AdminSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent className="overflow-hidden">
             <SidebarMenu>
+              {/* Vehículos con collapsible */}
+              <VehiclesCollapsibleMenu collapsed={collapsed} />
+
+              {/* Rutas con roles específicos */}
               <Can allowedRoles={["ADMIN"]}>
                 {MENU.routes
                   .filter((i) => i.roles?.includes("ADMIN"))

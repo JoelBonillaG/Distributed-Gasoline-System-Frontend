@@ -1,18 +1,27 @@
 const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 const passwordService = {
-  requestReset: async (input) => {
+  requestReset: async (email) => {
     try {
-      const response = await fetch(`${baseUrl}/auth/request-reset`, {
+      const response = await fetch(`${baseUrl}/auth/recover-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input }),
+        body: JSON.stringify({ email }),
       });
 
       const data = await response.json().catch(() => ({}));
+      console.log("Response data:", data);
 
       if (!response.ok) {
-        throw new Error("No se pudo procesar la solicitud");
+        // "maquillar" la respuesta
+        if (data?.statusCode === 404) {
+          return {
+            message:
+              "Si existe una cuenta asociada a este correo, recibirás un enlace de recuperación.",
+            safe: true,
+          };
+        }
+        throw new Error(data?.message || "No se pudo procesar la solicitud");
       }
 
       return data;

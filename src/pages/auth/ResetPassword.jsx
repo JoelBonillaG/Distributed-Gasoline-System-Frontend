@@ -23,12 +23,21 @@ function ResetPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState(null);
+  const [messageType, setMessageType] = useState("info");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (newPassword !== confirmPassword) {
+      setMessageType("error");
       setMessage("Las contraseñas no coinciden.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setMessageType("error");
+      setMessage("La contraseña debe tener al menos 6 caracteres.");
       return;
     }
 
@@ -36,14 +45,41 @@ function ResetPassword() {
     setMessage(null);
 
     try {
-      await passwordService.reset(token, newPassword);
-      setMessage("Tu contraseña fue actualizada con éxito.");
+      const response = await Promise.all([
+        passwordService.reset(token, newPassword),
+        new Promise((resolve) => setTimeout(resolve, 1500)),
+      ]);
 
-      setNewPassword("");
-      setConfirmPassword("");
+      const data = response[0];
+
+      // Determinar tipo de respuesta
+      if (data.success) {
+        setMessageType("info");
+        setMessage("Tu contraseña fue actualizada correctamente.");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        setMessageType("error");
+        setMessage("No se pudo actualizar la contraseña.");
+      }
     } catch (err) {
-      console.error(err);
-      setMessage("No se pudo actualizar la contraseña.");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const errorMsg = err.message || "Error al procesar la solicitud.";
+
+      if (
+        errorMsg.includes("Token inválido") ||
+        errorMsg.includes("expirado")
+      ) {
+        setMessageType("error");
+        setMessage("El enlace ha expirado o no es válido. Solicita uno nuevo.");
+      } else if (errorMsg.includes("antiguas")) {
+        setMessageType("warning");
+        setMessage("No puedes reutilizar una contraseña anterior.");
+      } else {
+        setMessageType("error");
+        setMessage("No se pudo actualizar la contraseña. Inténtalo otra vez.");
+      }
     } finally {
       setLoading(false);
     }
@@ -58,12 +94,12 @@ function ResetPassword() {
         className="absolute inset-0 bg-center bg-cover"
         style={{ backgroundImage: `url(${AUTH_BG})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/30 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/30 to-transparent dark:from-black/65 dark:via-black/40 dark:to-transparent" />
 
-      {/* Panel lateral (desktop) */}
+      {/* Panel lateral */}
       <div className="hidden md:flex absolute inset-0 items-center">
         <div className="pl-6 md:pl-10 max-w-xl">
-          <Card className="bg-white/10 supports-[backdrop-filter]:bg-white/10 backdrop-blur-md border-white/20 text-white shadow-xl">
+          <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white shadow-xl">
             <CardContent className="p-6 md:p-7">
               <div className="mb-5 grid size-12 place-content-center rounded-full bg-brand text-brand-contrast shadow-sm ring-1 ring-black/10 dark:ring-white/10">
                 <KeyRound className="size-7" />
@@ -106,7 +142,7 @@ function ResetPassword() {
                   Restablecer contraseña
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Ingresa tu nueva contraseña
+                  Ingresa y confirma tu nueva contraseña.
                 </CardDescription>
               </CardHeader>
 
@@ -117,12 +153,12 @@ function ResetPassword() {
                     <Input
                       id="newPassword"
                       type="password"
+                      placeholder="Mínimo 6 caracteres"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
                     />
                   </div>
-
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="confirmPassword">
                       Confirmar contraseña
@@ -130,6 +166,7 @@ function ResetPassword() {
                     <Input
                       id="confirmPassword"
                       type="password"
+                      placeholder="Repite la nueva contraseña"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
@@ -146,15 +183,7 @@ function ResetPassword() {
                 </form>
 
                 {message && (
-                  <AlertMessage
-                    type={
-                      message.includes("actualizada") // azul/info si se actualizó
-                        ? "info"
-                        : "error" // rojo si hay error
-                    }
-                  >
-                    {message}
-                  </AlertMessage>
+                  <AlertMessage type={messageType}>{message}</AlertMessage>
                 )}
 
                 <div className="mt-4 text-center">
@@ -163,8 +192,6 @@ function ResetPassword() {
                   </Button>
                 </div>
               </CardContent>
-
-              <CardFooter className="px-0"></CardFooter>
             </Card>
           </div>
 

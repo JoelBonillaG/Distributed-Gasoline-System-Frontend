@@ -17,7 +17,7 @@ import AlertMessage from "@/components/ui/alerts/AlertMessage";
 import logo from "@/assets/favicon.ico";
 
 function PasswordRecovery() {
-  const [input, setInput] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,12 +25,26 @@ function PasswordRecovery() {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+
+    // ✅ Validación mínima de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setMessage("Por favor, ingresa un correo electrónico válido.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      await passwordService.requestReset(input);
+      await Promise.all([
+        passwordService.requestReset(email),
+        new Promise((resolve) => setTimeout(resolve, 1800)),
+      ]);
+
       setMessage(
         "Si la cuenta existe, hemos enviado un correo con instrucciones."
       );
     } catch (err) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setMessage("Ocurrió un error al procesar la solicitud.");
     } finally {
       setLoading(false);
@@ -60,7 +74,7 @@ function PasswordRecovery() {
                 Recupera tu contraseña
               </h2>
               <p className="mt-4 text-base/7 text-white/90">
-                Ingresa tu correo electrónico o DNI para recibir un enlace de
+                Ingresa tu correo electrónico para recibir un enlace de
                 restablecimiento.
               </p>
             </CardContent>
@@ -94,21 +108,20 @@ function PasswordRecovery() {
                   Recuperar contraseña
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Ingresa tu correo electrónico o DNI para restablecer tu
-                  contraseña.
+                  Ingresa tu correo electrónico para restablecer tu contraseña.
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="px-0">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="flex flex-col space-y-2">
-                    <Label htmlFor="input">Email o DNI</Label>
+                    <Label htmlFor="email">Correo electrónico</Label>
                     <Input
-                      id="input"
-                      type="text"
-                      placeholder="ejemplo@mail.com o 12345678"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
+                      id="email"
+                      type="email"
+                      placeholder="ejemplo@mail.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
@@ -123,11 +136,7 @@ function PasswordRecovery() {
 
                 {message && (
                   <AlertMessage
-                    type={
-                      message.includes("enviado") // si contiene "enviado", usamos azul/informativo
-                        ? "info"
-                        : "error"
-                    }
+                    type={message.includes("enviado") ? "info" : "error"}
                   >
                     {message}
                   </AlertMessage>

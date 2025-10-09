@@ -23,6 +23,11 @@ import SpecialtiesOfferPage from "@/pages/specialty/SpecialtiesOfferPage.jsx";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import ReportsDashboard from "@/components/admin/ReportsDashboard.jsx";
 import ReportsExport from "@/pages/admin/ReportsExport.jsx";
+import VehiclesPage from "@/pages/vehicles/VehiclesPage.jsx";
+import CreateVehicleModelPage from "@/pages/vehicles/CreateVehicleModelPage.jsx";
+import EditVehicleModelPage from "@/pages/vehicles/EditVehicleModelPage.jsx";
+import VehicleUnitsPage from "@/pages/vehicles/VehicleUnitsPage.jsx";
+import UsersPage from "./pages/users/UsersPage";
 
 function RoleBasedHome() {
   const { user } = useAuth();
@@ -54,6 +59,17 @@ export default function App() {
           {/* Bloque protegido: requiere login */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AdminLayout />}>
+              {/* Rutas de vehículos - modelos */}
+              <Route path="/vehicles/models" element={<VehiclesPage />} />
+              <Route path="/vehicles/models/create" element={<CreateVehicleModelPage />} />
+              <Route path="/vehicles/models/edit/:id" element={<EditVehicleModelPage />} />
+
+              {/* Ruta para unidades de vehículos */}
+              <Route path="/vehicles/units" element={<VehicleUnitsPage />} />
+
+              {/* Redirección de /vehicles a /vehicles/models */}
+              <Route path="/vehicles" element={<Navigate to="/vehicles/models" replace />} />
+
               <Route path="/profile" element={<ProfilePage />} />
               {/* Index home según rol */}
               <Route index element={<RoleBasedHome />} />
@@ -61,6 +77,7 @@ export default function App() {
               {/* --- ADMIN ONLY --- */}
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
                 <Route path="/admin/" element={<Playground />} />
+                <Route path="/admin/users" element={<UsersPage />} /> 
               </Route>
             </Route>
           </Route>

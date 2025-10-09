@@ -49,6 +49,7 @@ export default function DataTable({
                                       rowActions,
                                       emptyMessage = "Sin datos",
                                       className,
+                                      onRowClick,
                                   }) {
     const [sorting, setSorting] = React.useState([]);
     const [globalFilter, setGlobalFilter] = React.useState("");
@@ -265,6 +266,7 @@ export default function DataTable({
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() ? "selected" : undefined}
+                                    onClick={() => onRowClick?.(row.original)}
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>

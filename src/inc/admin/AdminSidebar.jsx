@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/shadcn/sidebar";
 import { Avatar } from "@/components/ui/shadcn/avatar";
-import { FolderKanban, BookText, BarChart3, TestTube2 } from "lucide-react";
+import { FolderKanban, BookText, BarChart3, TestTube2 ,User} from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import logoUrl from "@/assets/favicon.ico";
 import AuthContext from "@/context/AuthContext";
@@ -90,9 +90,15 @@ export default function AdminSidebar() {
     ],
     routes: [
       {
+        to: "/admin/users",
+        icon: User,
+        label: "Usuarios",
+        roles: ["ADMIN"],
+      },
+      {
         to: "/admin/generic",
         icon: TestTube2,
-        label: "Routes",
+        label: "Rutas",
         roles: ["ADMIN"],
       },
     ],

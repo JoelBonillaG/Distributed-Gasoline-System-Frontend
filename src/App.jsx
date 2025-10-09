@@ -61,6 +61,7 @@ export default function App() {
               {/* --- ADMIN ONLY --- */}
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
                 <Route path="/admin/" element={<Playground />} />
+                <Route path="/admin/users" element={<Playground />} /> 
               </Route>
             </Route>
           </Route>

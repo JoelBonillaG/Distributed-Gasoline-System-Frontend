@@ -8,7 +8,13 @@ import api from "./api";
 
 export const getAllUsers = async () => {
   const res = await api.get("/users");
-  return res.data;
+  const users = Array.isArray(res.data) ? [...res.data] : [];
+
+  return users.sort((a, b) => {
+    const aId = typeof a.userId === "number" ? a.userId : a.id ?? 0;
+    const bId = typeof b.userId === "number" ? b.userId : b.id ?? 0;
+    return aId - bId;
+  });
 };
 
 export const getUser = async (id) => {
@@ -31,7 +37,32 @@ export const deleteUser=async(id)=>{
   return res.data;
 }
 
+export const getInactiveUsers = async () => {
+  const res = await api.get("/users/inactive");
+  const users = Array.isArray(res.data) ? [...res.data] : [];
+
+  return users.sort((a, b) => {
+    const aId = typeof a.userId === "number" ? a.userId : a.id ?? 0;
+    const bId = typeof b.userId === "number" ? b.userId : b.id ?? 0;
+    return aId - bId;
+  });
+};
+
+export const restoreUser = async (id) => {
+  const res = await api.post(`/users/undelete/${id}`);
+  return res.data;
+};
+
 export const parseFieldErrors = (error) => {
-  const errs = errors?.data?.errors;
+  const errs = error?.data?.errors;
   return errs && typeof errs === "object" ? errs : {};
+};
+
+export const getErrorDetail = (error, fallback = "Ha ocurrido un error") => {
+  return (
+    error?.data?.detail ||
+    error?.message ||
+    error?.data?.message ||
+    fallback
+  );
 };

@@ -23,6 +23,7 @@ import SpecialtiesOfferPage from "@/pages/specialty/SpecialtiesOfferPage.jsx";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import ReportsDashboard from "@/components/admin/ReportsDashboard.jsx";
 import ReportsExport from "@/pages/admin/ReportsExport.jsx";
+import UsersPage from "./pages/users/UsersPage";
 
 function RoleBasedHome() {
   const { user } = useAuth();
@@ -61,7 +62,7 @@ export default function App() {
               {/* --- ADMIN ONLY --- */}
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
                 <Route path="/admin/" element={<Playground />} />
-                <Route path="/admin/users" element={<Playground />} /> 
+                <Route path="/admin/users" element={<UsersPage />} /> 
               </Route>
             </Route>
           </Route>

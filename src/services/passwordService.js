@@ -1,3 +1,5 @@
+import { mapApiError } from "@/utils/mapApiError";
+
 const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 const passwordService = {
@@ -43,14 +45,18 @@ const passwordService = {
       });
 
       const data = await response.json().catch(() => ({}));
+      console.log("Response data:", data);
 
+      // Si no fue exitoso, mapear el error
       if (!response.ok) {
-        throw new Error("No se pudo restablecer la contraseña");
+        const message = mapApiError(response, data);
+        throw new Error(message);
       }
-
       return data;
     } catch (err) {
       console.error("Error en reset:", err);
+
+      // Si el backend no respondió, devolvemos error genérico
       throw new Error(
         err.message ||
           "Error de red. Verifica tu conexión e inténtalo otra vez."

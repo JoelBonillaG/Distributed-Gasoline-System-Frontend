@@ -1,22 +1,31 @@
-import { KeyRound } from "lucide-react";
+import { KeyRound, CheckCircle2, XCircle } from "lucide-react";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter,
 } from "@/components/ui/shadcn/card";
 import { Button } from "@/components/ui/shadcn/button";
 import { Input } from "@/components/ui/shadcn/input";
 import { Label } from "@/components/ui/shadcn/label";
-import { useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import passwordService from "@/services/passwordService";
 import AlertMessage from "@/components/ui/alerts/AlertMessage";
 import logo from "@/assets/favicon.ico";
 
+// ✅ Solo las reglas básicas
+const passwordRules = [
+  { label: "Debe tener al menos 8 caracteres", test: (p) => p.length >= 8 },
+  {
+    label: "Debe contener al menos una letra mayúscula",
+    test: (p) => /[A-Z]/.test(p),
+  },
+];
+
 function ResetPassword() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
 
@@ -25,7 +34,13 @@ function ResetPassword() {
   const [message, setMessage] = useState(null);
   const [messageType, setMessageType] = useState("info");
   const [loading, setLoading] = useState(false);
+  const [showRules, setShowRules] = useState(false);
 
+  useEffect(() => {
+    setShowRules(!!newPassword);
+  }, [newPassword]);
+
+  // 🔹 Mantienes tu handler original
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -45,41 +60,31 @@ function ResetPassword() {
     setMessage(null);
 
     try {
-      const response = await Promise.all([
+      const [data] = await Promise.all([
         passwordService.reset(token, newPassword),
-        new Promise((resolve) => setTimeout(resolve, 1500)),
+        new Promise((resolve) => setTimeout(resolve, 1200)),
       ]);
 
-      const data = response[0];
-
-      // Determinar tipo de respuesta
       if (data.success) {
         setMessageType("info");
-        setMessage("Tu contraseña fue actualizada correctamente.");
+        setMessage(
+          data.message || "Tu contraseña fue actualizada correctamente."
+        );
         setNewPassword("");
         setConfirmPassword("");
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       } else {
+        // Si el backend respondió sin success:true
         setMessageType("error");
-        setMessage("No se pudo actualizar la contraseña.");
+        setMessage(data.message || "No se pudo actualizar la contraseña.");
       }
     } catch (err) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      await new Promise((resolve) => setTimeout(resolve, 800));
       const errorMsg = err.message || "Error al procesar la solicitud.";
-
-      if (
-        errorMsg.includes("Token inválido") ||
-        errorMsg.includes("expirado")
-      ) {
-        setMessageType("error");
-        setMessage("El enlace ha expirado o no es válido. Solicita uno nuevo.");
-      } else if (errorMsg.includes("antiguas")) {
-        setMessageType("warning");
-        setMessage("No puedes reutilizar una contraseña anterior.");
-      } else {
-        setMessageType("error");
-        setMessage("No se pudo actualizar la contraseña. Inténtalo otra vez.");
-      }
+      setMessageType("error");
+      setMessage(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -148,17 +153,20 @@ function ResetPassword() {
 
               <CardContent className="px-0">
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Input nueva contraseña */}
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="newPassword">Nueva contraseña</Label>
                     <Input
                       id="newPassword"
                       type="password"
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Mínimo 8 caracteres"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
                     />
                   </div>
+
+                  {/* Input confirmar contraseña */}
                   <div className="flex flex-col space-y-2">
                     <Label htmlFor="confirmPassword">
                       Confirmar contraseña
@@ -171,6 +179,36 @@ function ResetPassword() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                     />
+                  </div>
+
+                  {/* Validación visual con transición suave */}
+                  <div
+                    className={`transition-all duration-300 overflow-hidden ${
+                      showRules
+                        ? "max-h-32 opacity-100 mt-2"
+                        : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    <ul className="text-sm mt-1 space-y-1">
+                      {passwordRules.map((rule, i) => {
+                        const passed = rule.test(newPassword || "");
+                        return (
+                          <li
+                            key={i}
+                            className={`flex items-center gap-2 transition-colors duration-300 ${
+                              passed ? "text-green-600" : "text-red-500"
+                            }`}
+                          >
+                            {passed ? (
+                              <CheckCircle2 className="size-4" />
+                            ) : (
+                              <XCircle className="size-4" />
+                            )}
+                            <span>{rule.label}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
 
                   <Button

@@ -1,44 +1,75 @@
 import { jwtDecode } from "jwt-decode";
 
+function parseMaybeLong(value) {
+  if (value == null) return null;
+
+  if (typeof value === "object") {
+    if (typeof value.low === "number") {
+      return value.low;
+    }
+    if ("value" in value && typeof value.value === "number") {
+      return value.value;
+    }
+  }
+
+  const numeric = Number(value);
+  return Number.isNaN(numeric) ? null : numeric;
+}
+
+function normalizePayload(payload) {
+  if (!payload || typeof payload !== "object") return null;
+
+  const roles = Array.isArray(payload.roles)
+    ? payload.roles.map((role) => ({
+        roleId: parseMaybeLong(role?.roleId ?? role?.id ?? role),
+        name: role?.name ?? String(role?.roleCode ?? role ?? ""),
+      }))
+    : [];
+
+  const userId =
+    parseMaybeLong(payload.userId) ?? parseMaybeLong(payload.sub) ?? null;
+
+  return {
+    ...payload,
+    userId,
+    centerId: parseMaybeLong(payload.centerId),
+    email: payload.email ?? null,
+    roles,
+  };
+}
+
 /**
- * Decodifica el token JWT guardado en localStorage
- * @returns {Object|null} Devuelve el payload decodificado o null si no hay token
+ * Decodifica el token JWT guardado en localStorage y normaliza la estructura
  */
 export function getDecodedToken() {
   const token = localStorage.getItem("access_token");
   if (!token) return null;
 
   try {
-    return jwtDecode(token);
+    const payload = jwtDecode(token);
+    return normalizePayload(payload);
   } catch (e) {
     console.error("Error decodificando token:", e);
     return null;
   }
 }
 
-/**
- * Devuelve el centerId del usuario logueado
- * @returns {number|null} centerId o null si no hay token
- */
 export function getUserCenterId() {
   const decoded = getDecodedToken();
-  return decoded?.centerId ? Number(decoded.centerId) : null;
+  return decoded?.centerId ?? null;
 }
 
-/**
- * Devuelve el userId del usuario logueado
- * @returns {number|null} userId o null si no hay token
- */
 export function getUserId() {
   const decoded = getDecodedToken();
-  return decoded?.userId ? Number(decoded.userId) : null;
+  return decoded?.userId ?? null;
 }
 
-/**
- * Devuelve los roles del usuario logueado
- * @returns {string[]} roles o arreglo vacío si no hay token
- */
+export function getUserEmail() {
+  const decoded = getDecodedToken();
+  return decoded?.email ?? null;
+}
+
 export function getUserRoles() {
   const decoded = getDecodedToken();
-  return decoded?.roles ?? [];
+  return decoded?.roles?.map((role) => role?.name ?? "") ?? [];
 }

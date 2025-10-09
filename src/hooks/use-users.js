@@ -1,6 +1,17 @@
-import { addUser, getAllUsers } from "@/services/users.service";
-import { useQuery } from "@tanstack/react-query";
-
+import {
+  addUser,
+  deleteUser,
+  getAllUsers,
+  getInactiveUsers,
+  getUser,
+  restoreUser,
+  updateUser,
+} from "@/services/users.service";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 export const useAllUsers = () =>
   useQuery({
@@ -9,39 +20,56 @@ export const useAllUsers = () =>
     staleTime: 5 * 60 * 1000,
   });
 
-
-export const useUser = (id) => {
+export const useUser = (id) =>
   useQuery({
     queryKey: ["users", id],
     queryFn: () => getUser(id),
-    scaleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
     enabled: !!id,
   });
-}
 
-export const useAddUser = ()=>{
-  const  qc = useQueryClient();
-  return useMutation({
-    mutationFn: (data) =>addUser(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
-  })
-}
-
-export const useUpdatePatient = (id) => {
+export const useAddUser = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data) => patients.updatePatient(id, data),
+    mutationFn: addUser,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
+  });
+};
+
+export const useInactiveUsers = (options = {}) =>
+  useQuery({
+    queryKey: ["users", "inactive"],
+    queryFn: getInactiveUsers,
+    staleTime: 5 * 60 * 1000,
+    ...options,
+  });
+
+export const useRestoreUser = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => restoreUser(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      qc.invalidateQueries({ queryKey: ["users", "inactive"] });
+    },
+  });
+};
+
+export const useUpdateUser = (id) => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload) => updateUser(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["users"] });
       qc.invalidateQueries({ queryKey: ["users", id] });
     },
   });
-}
+};
 
 export const useDeleteUser = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id) => deleteUser(id),
+    mutationFn: deleteUser,
     onSuccess: () => qc.invalidateQueries({ queryKey: ["users"] }),
   });
-}
+};

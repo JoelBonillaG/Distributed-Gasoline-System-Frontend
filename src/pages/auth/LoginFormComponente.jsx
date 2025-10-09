@@ -144,7 +144,11 @@ function LoginFormComponent() {
         </div>
 
         {/* Botón */}
-        <Button type="submit" disabled={isLoading} className="w-full">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-[#FB923C]"
+        >
           {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </Button>
       </form>

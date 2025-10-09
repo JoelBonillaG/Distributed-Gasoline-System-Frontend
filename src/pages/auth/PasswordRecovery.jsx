@@ -128,7 +128,7 @@ function PasswordRecovery() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full text-foreground hover:bg-foreground/10"
+                    className="w-full bg-[#FB923C]"
                   >
                     {loading ? "Enviando..." : "Enviar enlace de recuperación"}
                   </Button>
@@ -145,7 +145,21 @@ function PasswordRecovery() {
 
               <CardFooter className="px-0">
                 <div className="ml-auto">
-                  <Button asChild variant="link" className="p-0 text-primary">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="
+                     p-0
+                     text-[#F97316]
+                     font-medium
+                     transition-all
+                     duration-700
+                     ease-out
+                     drop-shadow-[0_0_4px_rgba(249,115,22,0.35)]
+                     hover:text-[#FB923C]
+                     hover:drop-shadow-[0_0_10px_rgba(249,115,22,0.7)]
+                   "
+                  >
                     <Link to="/login">Volver al login</Link>
                   </Button>
                 </div>

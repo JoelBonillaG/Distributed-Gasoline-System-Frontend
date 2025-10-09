@@ -90,7 +90,7 @@ function ResetPassword() {
     }
   };
 
-  const AUTH_BG = "/assets/auth-bg.avif";
+  const AUTH_BG = "/assets/background.webp";
 
   return (
     <div className="relative min-h-dvh overflow-hidden">
@@ -214,7 +214,7 @@ function ResetPassword() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full text-foreground hover:bg-foreground/10"
+                    className="w-full bg-[#FB923C]"
                   >
                     {loading ? "Guardando..." : "Actualizar contraseña"}
                   </Button>
@@ -224,8 +224,22 @@ function ResetPassword() {
                   <AlertMessage type={messageType}>{message}</AlertMessage>
                 )}
 
-                <div className="mt-4 text-center">
-                  <Button asChild variant="link" className="p-0 text-primary">
+                <div className="mt-4 text-right">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="
+                  p-0
+                  text-[#F97316]
+                  font-medium
+                  transition-all
+                  duration-700
+                  ease-out
+                  drop-shadow-[0_0_4px_rgba(249,115,22,0.35)]
+                  hover:text-[#FB923C]
+                  hover:drop-shadow-[0_0_10px_rgba(249,115,22,0.7)]
+                "
+                  >
                     <Link to="/login">Volver al login</Link>
                   </Button>
                 </div>

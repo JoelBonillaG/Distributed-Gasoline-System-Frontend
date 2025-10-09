@@ -223,11 +223,9 @@ export default function AdminSidebar() {
       </SidebarContent>
 
       <SidebarFooter
-        className={
-          collapsed
-            ? "mt-auto border-t px-2 pt-2 pb-1"
-            : "mt-auto border-t px-3 py-3"
-        }
+        className={`mt-auto border-t px-3 py-3 transition-colors duration-300 ${
+          collapsed ? "px-2 pt-2 pb-1" : ""
+        }`}
       >
         <SidebarMenu>
           <SidebarMenuItem>
@@ -236,23 +234,27 @@ export default function AdminSidebar() {
                 <SidebarMenuButton
                   asChild
                   tooltip={collapsed ? "Cuenta" : undefined}
-                  className={
+                  className={`group relative rounded-md overflow-hidden ${
                     collapsed ? "justify-center px-0" : "justify-start"
-                  }
+                  }`}
                 >
                   <button
                     type="button"
-                    className={
-                      collapsed
-                        ? "h-9 w-9 grid place-items-center rounded-md"
-                        : "w-full cursor-pointer"
-                    }
+                    className={`
+                relative w-full flex items-center gap-2 rounded-md px-2 py-1.5
+                transition-all duration-200
+                bg-[color-mix(in_oklab,var(--brand-veil),transparent_90%)]
+                hover:bg-[color-mix(in_oklab,var(--brand-veil),transparent_70%)]
+                dark:bg-white/5
+                dark:hover:bg-white/10
+              `}
                     aria-label="Cuenta"
                   >
                     <Avatar
-                      className={`flex items-center justify-center rounded-full text-white font-bold
-                        ${collapsed ? "h-9 w-9 text-sm" : "h-8 w-10 text-base"} 
-                        bg-gray-500`}
+                      className={`
+                  flex items-center justify-center rounded-full text-white font-bold
+                  px-5 bg-gray-500 dark:bg-gray-600
+                `}
                     >
                       {user
                         ? `${user.firstName?.[0]?.toUpperCase() ?? ""}${
@@ -262,13 +264,13 @@ export default function AdminSidebar() {
                     </Avatar>
 
                     {!collapsed && (
-                      <div className="grid grow truncate text-left ml-2">
-                        <span className="truncate text-sm font-medium">
+                      <div className="flex flex-col text-left leading-tight">
+                        <span className="text-sm font-medium text-foreground dark:text-white">
                           {user
                             ? `${user.firstName} ${user.lastName}`
                             : "Usuario"}
                         </span>
-                        <span className="truncate text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground truncate">
                           {user?.email ?? "sin correo"}
                         </span>
                       </div>
@@ -276,22 +278,66 @@ export default function AdminSidebar() {
                   </button>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end" side="top" className="w-48">
-                <DropdownMenuItem disabled>
+              <DropdownMenuContent
+                align="end"
+                side="top"
+                className="
+    w-48 
+    bg-card 
+    text-foreground 
+    border border-border 
+    shadow-lg 
+    transition-colors duration-300
+    dark:bg-popover 
+    dark:text-popover-foreground
+  "
+              >
+                {/* Nombre */}
+                <DropdownMenuItem
+                  disabled
+                  className="opacity-80 text-sm font-medium text-muted-foreground"
+                >
                   {user ? `${user.firstName} ${user.lastName}` : "Usuario"}
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+
+                <DropdownMenuSeparator className="bg-border/60 dark:bg-border/50" />
+
+                {/* Mi perfil */}
                 <DropdownMenuItem
                   onClick={() => navigate("/profile")}
-                  className="focus:bg-muted dark:focus:bg-gray-700 dark:text-gray-100"
+                  className="
+      text-[0.9rem]
+      font-medium
+      text-foreground/90 
+      hover:text-[#F97316]
+      hover:bg-[color-mix(in_oklab,var(--brand-veil),transparent_80%)]
+      dark:text-gray-200
+      dark:hover:text-white
+      dark:hover:bg-white/10
+      transition-all duration-200
+      rounded-sm
+    "
                 >
                   Mi perfil
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+
+                <DropdownMenuSeparator className="bg-border/60 dark:bg-border/50" />
+
+                {/* Cerrar sesión */}
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-red-600 focus:bg-red-500"
+                  className="
+      text-[0.9rem]
+      font-medium
+      text-[#dc2626]
+      hover:text-white
+      hover:bg-[#ef4444]
+      dark:text-[#f87171]
+      dark:hover:text-white
+      dark:hover:bg-[#ef4444]/80
+      transition-all duration-200
+      rounded-sm
+    "
                 >
                   Cerrar sesión
                 </DropdownMenuItem>

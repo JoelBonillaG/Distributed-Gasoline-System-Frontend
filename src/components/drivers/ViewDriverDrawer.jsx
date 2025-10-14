@@ -1,27 +1,18 @@
 import { useState, useEffect } from "react";
-import { Loader2, Truck, Info, FileText, Calendar, User, Shield } from "lucide-react";
+import { Loader2, Truck, Info, FileText, X } from "lucide-react";
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/shadcn/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/shadcn/tabs";
-import { Badge } from "@/components/ui/shadcn/badge";
-import { Separator } from "@/components/ui/shadcn/separator";
-import DataTable from "@/components/ui/table/data-table";
 import driversService from "@/services/drivers.service";
 import { getUser } from "@/services/users.service";
-import {
-  AVAILABILITY_MAP,
-  AVAILABILITY_COLORS,
-  LICENSE_STATUS_MAP,
-  LICENSE_STATUS_COLORS,
-  formatDate,
-  getDaysUntilExpiry,
-  getDaysColor
-} from "@/types/driver-types";
+import DriverInfoTab from "./DriverInfoTab";
+import DriverLicensesTab from "./DriverLicensesTab";
 
 /**
  * Drawer para ver detalles completos de un conductor
@@ -72,92 +63,39 @@ const ViewDriverDrawer = ({ open, driverId, onOpenChange }) => {
     }
   };
 
-  // Columnas para tabla de licencias
-  const licenseColumns = [
-    {
-      accessorKey: "driverLicenseId",
-      header: "#",
-      size: 60,
-    },
-    {
-      accessorKey: "licenseTypeCode",
-      header: "Tipo",
-      size: 80,
-      cell: ({ row }) => (
-        <span className="font-mono font-semibold text-lg">
-          {row.original.licenseTypeCode || "-"}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "number",
-      header: "Número",
-      cell: ({ row }) => (
-        <span className="font-mono">{row.original.number}</span>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: "Estado",
-      cell: ({ row }) => {
-        const status = row.original.status;
-        return (
-          <Badge className={LICENSE_STATUS_COLORS[status]}>
-            {LICENSE_STATUS_MAP[status] || status}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "issuedAt",
-      header: "Emisión",
-      cell: ({ row }) => formatDate(row.original.issuedAt),
-    },
-    {
-      accessorKey: "expiresAt",
-      header: "Vencimiento",
-      cell: ({ row }) => {
-        const expiresAt = row.original.expiresAt;
-        const days = getDaysUntilExpiry(expiresAt);
-        const colorClass = getDaysColor(days);
-        
-        return (
-          <div>
-            <div>{formatDate(expiresAt)}</div>
-            <div className={`text-xs ${colorClass}`}>
-              {days < 0 
-                ? `Vencida hace ${Math.abs(days)} días`
-                : days === 0
-                ? "Vence hoy"
-                : `${days} días`
-              }
-            </div>
-          </div>
-        );
-      },
-    },
-  ];
-
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-w-4xl mx-auto max-h-[50vh]" style={{ bottom: '13rem' }}>
-        <DrawerHeader>
-          <DrawerTitle className="flex items-center gap-2">
-            <Truck className="h-5 w-5" />
-            {isLoading ? (
-              "Cargando conductor..."
-            ) : driver ? (
-              `Conductor #${driver.driverId}`
-            ) : (
-              "Conductor no encontrado"
-            )}
-          </DrawerTitle>
-          <DrawerDescription>
-            {driver && `Usuario: ${user?.name || user?.username || `#${driver.userId}`}`}
-          </DrawerDescription>
+      <DrawerContent 
+        className="max-w-4xl mx-auto h-[95vh] top-[2.5vh] fixed" 
+        style={{ 
+          bottom: 'auto',
+          top: '2.5vh',
+          height: '95vh'
+        }}
+      >
+        <DrawerHeader className="flex flex-row items-start justify-between space-y-0 pb-4 sm:pb-6 pt-6">
+          <div className="flex-1 space-y-2">
+            <DrawerTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <Truck className="h-5 w-5 sm:h-6 sm:w-6" />
+              {isLoading ? (
+                "Cargando conductor..."
+              ) : driver ? (
+                `Conductor #${driver.driverId}`
+              ) : (
+                "Conductor no encontrado"
+              )}
+            </DrawerTitle>
+            <DrawerDescription className="text-sm sm:text-base">
+              {driver && `Usuario: ${user?.name || user?.username || `#${driver.userId}`}`}
+            </DrawerDescription>
+          </div>
+          <DrawerClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+            <X className="h-5 w-5 sm:h-6 sm:w-6" />
+            <span className="sr-only">Cerrar</span>
+          </DrawerClose>
         </DrawerHeader>
 
-        <div className="px-4 overflow-y-auto">
+        <div className="px-4 pb-6 overflow-y-auto flex-1 h-[calc(100%-80px)]">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -167,165 +105,27 @@ const ViewDriverDrawer = ({ open, driverId, onOpenChange }) => {
               <p className="text-muted-foreground">No se pudo cargar el conductor</p>
             </div>
           ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full">
-                <TabsTrigger value="info" className="flex-1">
-                  <Info className="mr-2 h-4 w-4" />
-                  Información
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+              <TabsList className="w-full grid grid-cols-2 mb-4 sm:mb-6">
+                <TabsTrigger value="info" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                  <Info className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden xs:inline">Información</span>
+                  <span className="xs:hidden">Info</span>
                 </TabsTrigger>
-                <TabsTrigger value="licenses" className="flex-1">
-                  <FileText className="mr-2 h-4 w-4" />
+                <TabsTrigger value="licenses" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                  <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
                   Licencias ({driver.summary?.totalLicenses || 0})
                 </TabsTrigger>
               </TabsList>
 
               {/* TAB: Información */}
-              <TabsContent value="info" className="space-y-1 mt-4">
-                {/* Datos del Conductor */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <Truck className="h-4 w-4" />
-                    Datos del Conductor
-                  </h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">ID Conductor</p>
-                      <p className="font-mono font-semibold">#{driver.driverId}</p>
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Disponibilidad</p>
-                      <Badge className={AVAILABILITY_COLORS[driver.availability]}>
-                        {AVAILABILITY_MAP[driver.availability]}
-                      </Badge>
-                    </div>
-
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Registrado</p>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{formatDate(driver.createdAt)}</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">Última actualización</p>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{formatDate(driver.updatedAt)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Datos del Usuario */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Usuario Asociado
-                  </h3>
-                  
-                  {user ? (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">ID Usuario</p>
-                        <p className="font-mono">#{user.userId || user.id}</p>
-                      </div>
-                      
-                      <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Nombre</p>
-                        <p>{user.name || user.username || "-"}</p>
-                      </div>
-
-                      {user.email && (
-                        <div className="space-y-1 col-span-2">
-                          <p className="text-sm text-muted-foreground">Email</p>
-                          <p>{user.email}</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Usuario #{driver.userId}
-                    </p>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Resumen de Licencias */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <Shield className="h-4 w-4" />
-                    Resumen de Licencias
-                  </h3>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="rounded-lg border bg-card p-4 space-y-1">
-                      <p className="text-sm text-muted-foreground">Total</p>
-                      <p className="text-2xl font-bold">{driver.summary?.totalLicenses || 0}</p>
-                    </div>
-                    
-                    <div className="rounded-lg border bg-emerald-50 p-4 space-y-1">
-                      <p className="text-sm text-emerald-700">Activas</p>
-                      <p className="text-2xl font-bold text-emerald-700">
-                        {driver.summary?.activeLicenses || 0}
-                      </p>
-                    </div>
-
-                    <div className="rounded-lg border bg-red-50 p-4 space-y-1">
-                      <p className="text-sm text-red-700">Vencidas</p>
-                      <p className="text-2xl font-bold text-red-700">
-                        {driver.summary?.expiredLicenses || 0}
-                      </p>
-                    </div>
-
-                    <div className="rounded-lg border bg-amber-50 p-4 space-y-1">
-                      <p className="text-sm text-amber-700">Suspendidas</p>
-                      <p className="text-2xl font-bold text-amber-700">
-                        {driver.summary?.suspendedLicenses || 0}
-                      </p>
-                    </div>
-                  </div>
-
-                  {driver.summary?.licenseTypes?.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-muted-foreground">Tipos de licencia:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {driver.summary.licenseTypes.map((type) => (
-                          <Badge key={type} variant="secondary" className="font-mono text-lg">
-                            {type}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <TabsContent value="info" className="space-y-4 sm:space-y-6 mt-0 h-full overflow-y-auto">
+                <DriverInfoTab driver={driver} user={user} />
               </TabsContent>
 
               {/* TAB: Licencias */}
-              <TabsContent value="licenses" className="mt-6">
-                {driver.licenses && driver.licenses.length > 0 ? (
-                  <div className="rounded-xl border bg-card">
-                    <div className="p-2">
-                      <DataTable
-                        columns={licenseColumns}
-                        data={driver.licenses}
-                        emptyMessage="No hay licencias registradas"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 border rounded-lg bg-muted/30">
-                    <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground">
-                      Este conductor no tiene licencias registradas
-                    </p>
-                  </div>
-                )}
+              <TabsContent value="licenses" className="mt-0 h-full">
+                <DriverLicensesTab driver={driver} />
               </TabsContent>
             </Tabs>
           )}

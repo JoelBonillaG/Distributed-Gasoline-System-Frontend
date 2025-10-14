@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/shadcn/sidebar";
 import { Avatar } from "@/components/ui/shadcn/avatar";
-import { FolderKanban, BookText, BarChart3, TestTube2, Car, ChevronDown, User, Truck } from "lucide-react";
+import { FolderKanban, BookText, BarChart3, TestTube2, Car, ChevronDown, User, Truck, Shield } from "lucide-react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import logoUrl from "@/assets/favicon.ico";
 import AuthContext from "@/context/AuthContext";
@@ -208,6 +208,12 @@ export default function AdminSidebar() {
         to: "/drivers",
         icon: Truck,
         label: "Conductores",
+        roles: ["ADMIN"],
+      },
+      {
+        to: "/license-types",
+        icon: Shield,
+        label: "Tipos de Licencia",
         roles: ["ADMIN"],
       },
       {

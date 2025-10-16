@@ -59,6 +59,7 @@ export const AuthProvider = ({ children }) => {
 
       if (!token || !profile) throw new Error("Credenciales inválidas");
 
+      console.log("Llego perfil:", profile);
       setAccessToken(token);
       setUser(profile);
       setIsAuthenticated(true);

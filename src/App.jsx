@@ -28,6 +28,8 @@ import CreateVehicleModelPage from "@/pages/vehicles/CreateVehicleModelPage.jsx"
 import EditVehicleModelPage from "@/pages/vehicles/EditVehicleModelPage.jsx";
 import VehicleUnitsPage from "@/pages/vehicles/VehicleUnitsPage.jsx";
 import UsersPage from "./pages/users/UsersPage";
+import DriversPage from "./pages/drivers/DriversPage";
+import LicenseTypesPage from "./pages/license-types";
 
 function RoleBasedHome() {
   const { user } = useAuth();
@@ -77,7 +79,9 @@ export default function App() {
               {/* --- ADMIN ONLY --- */}
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
                 <Route path="/admin/" element={<Playground />} />
-                <Route path="/admin/users" element={<UsersPage />} /> 
+                <Route path="/admin/users" element={<UsersPage />} />
+                <Route path="/drivers" element={<DriversPage />} />
+                <Route path="/license-types" element={<LicenseTypesPage />} />
               </Route>
             </Route>
           </Route>

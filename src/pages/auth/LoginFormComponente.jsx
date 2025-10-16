@@ -37,7 +37,9 @@ function LoginFormComponent() {
 
     try {
       const result = await login(email, password);
-      if (result.success && result.accessToken) {
+      console.log("Login result:", result);
+
+      if (result.success) {
         toast.success("Inicio de sesión correcto", {
           id: "login-success",
           description: "Bienvenido de nuevo",

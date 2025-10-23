@@ -50,121 +50,122 @@ const getMachineTypeBadgeColor = (type) => {
 
 // Columnas de la tabla
 const baseColumns = (onEdit, onDelete, onView) => [
-  {
-    accessorKey: "modelId",
-    header: "ID",
-    size: 72,
-    cell: ({ row }) => <span className="tabular-nums">{row.original.modelId}</span>,
-  },
-  {
-    accessorKey: "brand",
-    header: "Marca",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.original.brand}</div>
-    ),
-  },
-  {
-    accessorKey: "family",
-    header: "Familia",
-    cell: ({ row }) => row.original.family || "—",
-  },
-  {
-    accessorKey: "trim",
-    header: "Trim",
-    cell: ({ row }) => row.original.trim || "—",
-  },
-  {
-    accessorKey: "yearFrom",
-    header: "Año",
-    size: 96,
-    cell: ({ row }) => (
-      <span className="tabular-nums">
+    {
+        accessorKey: "modelId",
+        header: "ID",
+        size: 72,
+        cell: ({ row }) => <span className="tabular-nums">{row.original.modelId}</span>,
+    },
+    {
+        accessorKey: "brand",
+        header: "Marca",
+        cell: ({ row }) => <div className="font-medium">{row.original.brand}</div>,
+    },
+    {
+        accessorKey: "family",
+        header: "Familia",
+        cell: ({ row }) => row.original.family || "—",
+    },
+    {
+        accessorKey: "trim",
+        header: "Trim",
+        cell: ({ row }) => row.original.trim || "—",
+    },
+    {
+        accessorKey: "yearFrom",
+        header: "Año",
+        size: 96,
+        cell: ({ row }) => (
+            <span className="tabular-nums">
         {row.original.yearFrom}
-        {row.original.yearTo && ` - ${row.original.yearTo}`}
+                {row.original.yearTo && ` - ${row.original.yearTo}`}
       </span>
-    ),
-  },
-  {
-    accessorKey: "machineType",
-    header: "Tipo",
-    cell: ({ row }) => {
-      const type = row.original.machineType;
-      return (
-        <Badge variant="outline" className={getMachineTypeBadgeColor(type)}>
-          {MACHINE_TYPE_MAP[type] || type}
-        </Badge>
-      );
+        ),
     },
-  },
-  {
-    accessorKey: "status",
-    header: "Estado",
-    cell: ({ row }) => {
-      const status = row.original.status;
-      const colorClass =
-        status === "ACTIVE" ? "text-green-600 font-medium" :
-        "text-orange-600 font-medium";
+    {
+        accessorKey: "machineType",
+        header: "Tipo",
+        cell: ({ row }) => {
+            const type = row.original.machineType;
+            return (
+                <Badge variant="outline" className={getMachineTypeBadgeColor(type)}>
+                    {MACHINE_TYPE_MAP[type] || type}
+                </Badge>
+            );
+        },
+    },
+    {
+        accessorKey: "status",
+        header: "Estado",
+        cell: ({ row }) => {
+            const status = row.original.status;
+            const colorClass =
+                status === "ACTIVE"
+                    ? "text-green-600 font-medium"
+                    : status === "DEPRECATED"
+                        ? "text-orange-600 font-medium"
+                        : "text-red-600 font-medium";
 
-      return (
-        <span className={colorClass}>
-          {STATUS_MAP[status] || status}
-        </span>
-      );
+            return <span className={colorClass}>{STATUS_MAP[status] || status}</span>;
+        },
     },
-  },
-  {
-    id: "actions",
-    header: "Acciones",
-    size: 120,
-    cell: ({ row }) => {
-      const vehicle = row.original;
-      const disabled = vehicle.status === "DEPRECATED";
+    {
+        id: "actions",
+        header: "Acciones",
+        size: 120,
+        cell: ({ row }) => {
+            const vehicle = row.original;
+            const isDeprecated = vehicle.status === "DEPRECATED";
 
-      return (
-        <div className="flex gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            title="Ver detalles"
-            onClick={(e) => {
-              e.stopPropagation();
-              onView(vehicle);
-            }}
-          >
-            <Eye className="size-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            title={disabled ? "Vehículo deprecado" : "Editar"}
-            onClick={(e) => {
-              e.stopPropagation();
-              !disabled && onEdit(vehicle);
-            }}
-            disabled={disabled}
-          >
-            <Pencil className={`size-4 ${disabled ? "text-muted-foreground" : ""}`} />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            title={disabled ? "Vehículo deprecado" : "Eliminar"}
-            onClick={(e) => {
-              e.stopPropagation();
-              !disabled && onDelete(vehicle);
-            }}
-            disabled={disabled}
-          >
-            <Trash2
-              className={`size-4 ${
-                disabled ? "text-muted-foreground" : "text-destructive"
-              }`}
-            />
-          </Button>
-        </div>
-      );
+            return (
+                <div className="flex gap-1">
+                    {/* Ver */}
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        title="Ver detalles"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onView(vehicle);
+                        }}
+                    >
+                        <Eye className="size-4" />
+                    </Button>
+
+                    {/* Editar — deshabilitado si está deprecado */}
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        title={isDeprecated ? "Vehículo deprecado" : "Editar"}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            !isDeprecated && onEdit(vehicle);
+                        }}
+                        disabled={isDeprecated}
+                    >
+                        <Pencil
+                            className={`size-4 ${
+                                isDeprecated ? "text-muted-foreground" : ""
+                            }`}
+                        />
+                    </Button>
+
+                    {/* Eliminar — permitido incluso si está deprecado */}
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        title="Eliminar"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(vehicle);
+                        }}
+                    >
+                        <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                </div>
+            );
+        },
     },
-  },
 ];
 
 export default function VehiclesPage() {

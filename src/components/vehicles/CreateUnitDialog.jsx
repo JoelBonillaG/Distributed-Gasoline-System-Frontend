@@ -60,7 +60,7 @@ const validators = {
   },
 };
 
-export default function CreateUnitDialog({ open, onOpenChange, onSuccess }) {
+export default function CreateUnitDialog({ open, onOpenChange, onSuccess, defaultMachineType = null }) {
   const [isPending, setIsPending] = React.useState(false);
   const [submitAttempted, setSubmitAttempted] = React.useState(false);
   const [models, setModels] = React.useState([]);
@@ -108,12 +108,12 @@ export default function CreateUnitDialog({ open, onOpenChange, onSuccess }) {
     if (open) {
       loadModels();
     }
-  }, [open]);
+  }, [open, defaultMachineType]);
 
   const loadModels = async () => {
     setLoadingModels(true);
     try {
-      const data = await vehiclesService.getAllVehicles();
+      const data = await vehiclesService.getAllVehicles(defaultMachineType);
       // Filtrar solo modelos activos
       const activeModels = (data || []).filter(m => m.status === "ACTIVE");
       setModels(activeModels);

@@ -104,7 +104,7 @@ const validators = {
   },
 };
 
-export default function CreateVehicleDialog({ open, onOpenChange, onSuccess }) {
+export default function CreateVehicleDialog({ open, onOpenChange, onSuccess, defaultMachineType = "LIGHT" }) {
   const [isPending, setIsPending] = React.useState(false);
   const [submitAttempted, setSubmitAttempted] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState("vehicle");
@@ -174,7 +174,7 @@ export default function CreateVehicleDialog({ open, onOpenChange, onSuccess }) {
         trim: "",
         yearFrom: new Date().getFullYear(),
         yearTo: null,
-        machineType: "LIGHT",
+        machineType: defaultMachineType,
         status: "ACTIVE",
         engine: {
           engineType: "DIESEL",
@@ -219,7 +219,7 @@ export default function CreateVehicleDialog({ open, onOpenChange, onSuccess }) {
       });
       setSelectedLicense("");
     }
-  }, [open]);
+  }, [open, defaultMachineType]);
 
   // Validar en tiempo real
   React.useEffect(() => {

@@ -3,10 +3,12 @@ import api from "./api";
 const vehiclesService = {
   /**
    * Obtener todos los modelos de vehículos
+   * @param {string} machineType - Filtro opcional: "LIGHT" o "HEAVY"
    * @returns {Promise<Array>} Lista de modelos de vehículos
    */
-  async getAllVehicles() {
-    const response = await api.get("/vehicles/models");
+  async getAllVehicles(machineType = null) {
+    const params = machineType ? { machineType } : {};
+    const response = await api.get("/vehicles/models", { params });
     return response.data;
   },
 
@@ -107,10 +109,12 @@ const vehiclesService = {
 
   /**
    * Obtener todas las unidades de vehículos
+   * @param {string} machineType - Filtro opcional: "LIGHT" o "HEAVY"
    * @returns {Promise<Array>} Lista de unidades de vehículos
    */
-  async getAllUnits() {
-    const response = await api.get("/vehicles/units");
+  async getAllUnits(machineType = null) {
+    const params = machineType ? { machineType } : {};
+    const response = await api.get("/vehicles/units", { params });
     return response.data;
   },
 

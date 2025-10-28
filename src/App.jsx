@@ -27,6 +27,10 @@ import VehiclesPage from "@/pages/vehicles/VehiclesPage.jsx";
 import CreateVehicleModelPage from "@/pages/vehicles/CreateVehicleModelPage.jsx";
 import EditVehicleModelPage from "@/pages/vehicles/EditVehicleModelPage.jsx";
 import VehicleUnitsPage from "@/pages/vehicles/VehicleUnitsPage.jsx";
+import LightVehiclesPage from "@/pages/vehicles/LightVehiclesPage.jsx";
+import LightVehicleUnitsPage from "@/pages/vehicles/LightVehicleUnitsPage.jsx";
+import HeavyVehiclesPage from "@/pages/vehicles/HeavyVehiclesPage.jsx";
+import HeavyVehicleUnitsPage from "@/pages/vehicles/HeavyVehicleUnitsPage.jsx";
 import UsersPage from "./pages/users/UsersPage";
 import DriversPage from "./pages/drivers/DriversPage";
 import LicenseTypesPage from "./pages/license-types";
@@ -61,16 +65,22 @@ export default function App() {
           {/* Bloque protegido: requiere login */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AdminLayout />}>
-              {/* Rutas de vehículos - modelos */}
+              {/* Rutas de vehículos livianos */}
+              <Route path="/vehicles/light/models" element={<LightVehiclesPage />} />
+              <Route path="/vehicles/light/units" element={<LightVehicleUnitsPage />} />
+
+              {/* Rutas de vehículos pesados */}
+              <Route path="/vehicles/heavy/models" element={<HeavyVehiclesPage />} />
+              <Route path="/vehicles/heavy/units" element={<HeavyVehicleUnitsPage />} />
+
+              {/* Rutas antiguas de vehículos - mantenidas para compatibilidad */}
               <Route path="/vehicles/models" element={<VehiclesPage />} />
               <Route path="/vehicles/models/create" element={<CreateVehicleModelPage />} />
               <Route path="/vehicles/models/edit/:id" element={<EditVehicleModelPage />} />
-
-              {/* Ruta para unidades de vehículos */}
               <Route path="/vehicles/units" element={<VehicleUnitsPage />} />
 
-              {/* Redirección de /vehicles a /vehicles/models */}
-              <Route path="/vehicles" element={<Navigate to="/vehicles/models" replace />} />
+              {/* Redirección de /vehicles a vehículos livianos */}
+              <Route path="/vehicles" element={<Navigate to="/vehicles/light/models" replace />} />
 
               <Route path="/profile" element={<ProfilePage />} />
               {/* Index home según rol */}

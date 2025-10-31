@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/shadcn/sidebar";
 import { Avatar } from "@/components/ui/shadcn/avatar";
-import { FolderKanban, BookText, BarChart3, TestTube2, Car, ChevronDown, User, Truck, Shield } from "lucide-react";
+import { BookText, BarChart3, TestTube2, Car, ChevronDown, User, Truck, Shield } from "lucide-react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import logoUrl from "@/assets/favicon.ico";
 import AuthContext from "@/context/AuthContext";
@@ -191,9 +191,9 @@ export default function AdminSidebar() {
   const MENU = {
     reports: [
       {
-        to: "/admin/reports",
+        to: "/dashboard",
         icon: BarChart3,
-        label: "Dashboard de Reportes",
+        label: "Dashboard",
         roles: ["ADMIN"],
       },
     ],
@@ -220,14 +220,6 @@ export default function AdminSidebar() {
         to: "/admin/generic",
         icon: TestTube2,
         label: "Rutas",
-        roles: ["ADMIN"],
-      },
-    ],
-    platform: [
-      {
-        to: "/admin/playground",
-        icon: FolderKanban,
-        label: "Playground",
         roles: ["ADMIN"],
       },
     ],
@@ -322,22 +314,6 @@ export default function AdminSidebar() {
         </SidebarGroup>
 
         <SidebarSeparator className="sidebar-divider my-2" />
-
-        <Can allowedRoles={["ADMIN"]}>
-          <SidebarGroup>
-            <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
-              Plataforma
-            </SidebarGroupLabel>
-            <SidebarGroupContent className="overflow-hidden">
-              <SidebarMenu>
-                {MENU.platform.map((item) => (
-                  <NavItem key={item.to} {...item} collapsed={collapsed} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-          <SidebarSeparator className="sidebar-divider my-2" />
-        </Can>
 
         <SidebarGroup>
           <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>

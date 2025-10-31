@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AdminLayout from "@/layouts/AdminLayout";
-import Playground from "@/pages/admin/Playground";
 import AppToaster from "@/inc/ui/Toaster.jsx";
+import Dashboard from "@/pages/admin/reports/Dashboard";
 import NotFound from "@/pages/NotFound.jsx";
 import Login from "@/pages/auth/Login";
 import ErrorBoundary from "@/utils/ErrorBoundary";
@@ -38,8 +38,7 @@ function RoleBasedHome() {
     : [];
 
   console.log("🧱 User roles:", roles);
-  if (roles.includes("ADMIN"))
-    return <Navigate to="/admin/playground" replace />;
+  if (roles.includes("ADMIN")) return <Navigate to="/dashboard" replace />;
   return <Navigate to="/forbidden" replace />;
 }
 
@@ -53,9 +52,6 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/password-recovery" element={<PasswordRecovery />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route element={<AdminLayout />}>
-              <Route path="/admin/playground" element={<Playground />} />
-            </Route>
           </Route>
 
           {/* Bloque protegido: requiere login */}
@@ -63,14 +59,23 @@ export default function App() {
             <Route element={<AdminLayout />}>
               {/* Rutas de vehículos - modelos */}
               <Route path="/vehicles/models" element={<VehiclesPage />} />
-              <Route path="/vehicles/models/create" element={<CreateVehicleModelPage />} />
-              <Route path="/vehicles/models/edit/:id" element={<EditVehicleModelPage />} />
+              <Route
+                path="/vehicles/models/create"
+                element={<CreateVehicleModelPage />}
+              />
+              <Route
+                path="/vehicles/models/edit/:id"
+                element={<EditVehicleModelPage />}
+              />
 
               {/* Ruta para unidades de vehículos */}
               <Route path="/vehicles/units" element={<VehicleUnitsPage />} />
 
               {/* Redirección de /vehicles a /vehicles/models */}
-              <Route path="/vehicles" element={<Navigate to="/vehicles/models" replace />} />
+              <Route
+                path="/vehicles"
+                element={<Navigate to="/vehicles/models" replace />}
+              />
 
               <Route path="/profile" element={<ProfilePage />} />
               {/* Index home según rol */}
@@ -78,7 +83,7 @@ export default function App() {
 
               {/* --- ADMIN ONLY --- */}
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-                <Route path="/admin/" element={<Playground />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/admin/users" element={<UsersPage />} />
                 <Route path="/drivers" element={<DriversPage />} />
                 <Route path="/license-types" element={<LicenseTypesPage />} />

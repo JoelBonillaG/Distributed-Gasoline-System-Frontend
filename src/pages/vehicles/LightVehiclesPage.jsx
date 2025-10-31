@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/shadcn/alert-dialog";
 import DataTable from "@/components/ui/table/data-table";
 import { PageHeading } from "@/components/ui/typography/Heading";
-import { Plus, Pencil, Trash2, Loader2, Car, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Car, Eye, FileText, CheckCircle, XCircle, Calendar } from "lucide-react";
 import vehiclesService from "@/services/vehicles.service";
 import ViewVehicleDrawer from "@/components/vehicles/ViewVehicleDrawer";
 import CreateVehicleDialog from "@/components/vehicles/CreateVehicleDialog";
@@ -81,18 +81,6 @@ const baseColumns = (onEdit, onDelete, onView) => [
                 {row.original.yearTo && ` - ${row.original.yearTo}`}
       </span>
         ),
-    },
-    {
-        accessorKey: "machineType",
-        header: "Tipo",
-        cell: ({ row }) => {
-            const type = row.original.machineType;
-            return (
-                <Badge variant="outline" className={getMachineTypeBadgeColor(type)}>
-                    {MACHINE_TYPE_MAP[type] || type}
-                </Badge>
-            );
-        },
     },
     {
         accessorKey: "status",
@@ -168,7 +156,7 @@ const baseColumns = (onEdit, onDelete, onView) => [
     },
 ];
 
-export default function VehiclesPage() {
+export default function LightVehiclesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [vehicles, setVehicles] = React.useState([]);
@@ -186,12 +174,12 @@ export default function VehiclesPage() {
   const [confirmVehicle, setConfirmVehicle] = React.useState(null);
   const [deletePending, setDeletePending] = React.useState(false);
 
-  // Cargar vehículos
+  // Cargar vehículos livianos
   const loadVehicles = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await vehiclesService.getAllVehicles();
+      const data = await vehiclesService.getAllVehicles("LIGHT");
       setVehicles(data || []);
     } catch (e) {
       const msg = e?.response?.data?.detail || e?.message || "Error al cargar vehículos";
@@ -281,11 +269,30 @@ export default function VehiclesPage() {
     onView(row.original);
   };
 
+  // Calcular estadísticas
+  const stats = React.useMemo(() => {
+    const total = vehicles.length;
+    const active = vehicles.filter(v => v.status === "ACTIVE").length;
+    const deprecated = vehicles.filter(v => v.status === "DEPRECATED").length;
+    
+    // Contar por antigüedad (basado en yearFrom)
+    const recientes = vehicles.filter(v => v.yearFrom >= 2020).length;
+    const anteriores = vehicles.filter(v => v.yearFrom < 2020).length;
+
+    return {
+      total,
+      active,
+      deprecated,
+      recientes,
+      anteriores,
+    };
+  }, [vehicles]);
+
   return (
     <div className="space-y-6 p-6">
       <PageHeading
-        title="Modelos de Vehículos"
-        subtitle="Administra los modelos de vehículos del sistema"
+        title="Modelos de Vehículos Livianos"
+        subtitle="Administra los modelos de vehículos livianos del sistema"
         icon={Car}
         actions={
           <Button onClick={openCreate}>
@@ -295,13 +302,62 @@ export default function VehiclesPage() {
         }
       />
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-lg border bg-card p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground">Total Modelos</p>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold">{stats.total}</p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground">Activos</p>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-green-600">{stats.active}</p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground">Deprecados</p>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="text-2xl sm:text-3xl font-bold text-orange-600">{stats.deprecated}</p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs sm:text-sm font-medium text-muted-foreground">Antigüedad</p>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex justify-between items-center">
+              <span className="text-xs sm:text-sm font-medium">Recientes (2020+):</span>
+              <span className="text-sm font-bold text-blue-600">{stats.recientes}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs sm:text-sm font-medium">Anteriores (&lt;2020):</span>
+              <span className="text-sm font-bold text-amber-600">{stats.anteriores}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <Card className="overflow-hidden">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base">Modelos de Vehículos</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-base">Modelos de Vehículos Livianos</CardTitle>
+                <Badge variant="outline" className="bg-chart-1/20 text-chart-1 hover:bg-chart-1/30">
+                  Liviana
+                </Badge>
+              </div>
               <p className="mt-1 text-sm text-muted-foreground">
-                Listado de todos los modelos registrados. Haz clic en una fila para ver detalles.
+                Listado de todos los modelos livianos registrados. Haz clic en una fila para ver detalles.
               </p>
             </div>
 
@@ -353,6 +409,7 @@ export default function VehiclesPage() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         onSuccess={handleCreateSuccess}
+        defaultMachineType="LIGHT"
       />
 
       {/* Modal para editar modelo */}
@@ -395,3 +452,5 @@ export default function VehiclesPage() {
     </div>
   );
 }
+
+

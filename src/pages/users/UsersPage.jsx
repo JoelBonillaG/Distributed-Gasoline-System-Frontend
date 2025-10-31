@@ -55,6 +55,8 @@ export default function UsersPage() {
     const [editingUser, setEditingUser] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [userToDelete, setUserToDelete] = useState(null);
+    const [userToRestore, setUserToRestore] = useState(null);
+    const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false);
     const [showDeleted, setShowDeleted] = useState(false);
 
     const currentUserEmail = useMemo(() => {
@@ -161,6 +163,7 @@ export default function UsersPage() {
         setSelectedUser(null);
         setServerErrors({});
         setUserToDelete(null);
+        setUserToRestore(null);
     }, []);
 
     const columns = useMemo(() => {
@@ -221,17 +224,9 @@ export default function UsersPage() {
                         <Button
                             size="icon"
                             variant="ghost"
-                            onClick={async () => {
-                                try {
-                                    await restoreMut.mutateAsync(user.userId ?? user.id);
-                                    toast.success("Usuario reactivado", {
-                                        description: `ID ${user.userId ?? user.id}`,
-                                    });
-                                    refetchInactive?.();
-                                    refetchActive?.();
-                                } catch (err) {
-                                    toast.error(getErrorDetail(err, "Error al restaurar"));
-                                }
+                            onClick={() => {
+                                setUserToRestore(user);
+                                setRestoreConfirmOpen(true);
                             }}
                             title="Restaurar"
                         >
@@ -304,10 +299,14 @@ export default function UsersPage() {
                 setServerErrors({});
                 if (editingUser) {
                     await updateMut.mutateAsync(payload);
-                    toast.success("Usuario actualizado");
+                    toast.success("Usuario actualizado", {
+                        description: `${values.firstName} ${values.lastName}`,
+                    });
                 } else {
                     await addMut.mutateAsync(payload);
-                    toast.success("Usuario creado");
+                    toast.success("Usuario creado", {
+                        description: `${values.firstName} ${values.lastName}`,
+                    });
                 }
                 setFormOpen(false);
                 resetModalStates();
@@ -476,7 +475,7 @@ export default function UsersPage() {
                                 try {
                                     await deleteMut.mutateAsync(userToDelete.userId ?? userToDelete.id);
                                     toast.success("Usuario eliminado", {
-                                        description: `ID ${userToDelete.userId ?? userToDelete.id}`,
+                                        description: `${userToDelete.firstName} ${userToDelete.lastName}`,
                                     });
                                     setConfirmOpen(false);
                                     resetModalStates();
@@ -488,6 +487,41 @@ export default function UsersPage() {
                             }}
                         >
                             Eliminar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={restoreConfirmOpen} onOpenChange={setRestoreConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Reactivar usuario?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {userToRestore
+                                ? `Esta acción reactivará a ${userToRestore.firstName} ${userToRestore.lastName}.`
+                                : "Este usuario volverá a tener acceso al sistema."}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                if (!userToRestore) return;
+                                try {
+                                    await restoreMut.mutateAsync(userToRestore.userId ?? userToRestore.id);
+                                    toast.success("Usuario reactivado", {
+                                        description: `${userToRestore.firstName} ${userToRestore.lastName}`,
+                                    });
+                                    setRestoreConfirmOpen(false);
+                                    resetModalStates();
+                                    refetchInactive?.();
+                                    refetchActive();
+                                } catch (err) {
+                                    toast.error(getErrorDetail(err, "Error al restaurar"));
+                                }
+                            }}
+                        >
+                            Reactivar
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

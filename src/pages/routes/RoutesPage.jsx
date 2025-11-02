@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/shadcn/button";
 import DataTable from "@/components/ui/table/data-table";
 import { PageHeading } from "@/components/ui/typography/Heading";
@@ -9,7 +10,19 @@ import {
     Trash2,
     MapPin,
 } from "lucide-react";
-import { useAllRoutes } from "@/hooks/use-routes";
+import { useAllRoutes, useDeleteRoute } from "@/hooks/use-routes";
+import { toast } from "sonner";
+import { getErrorDetail } from "@/services/routes.service";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/shadcn/alert-dialog";
 
 const VEHICLE_TYPE_OPTIONS = [
     { value: "LIVIANO", label: "Liviano" },
@@ -18,14 +31,20 @@ const VEHICLE_TYPE_OPTIONS = [
 ];
 
 export default function RoutesPage() {
+    const navigate = useNavigate();
     const [vehicleTypeFilter, setVehicleTypeFilter] = useState(null);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [routeToDelete, setRouteToDelete] = useState(null);
 
     const {
         data: routesData,
         isLoading,
         isError,
         error,
+        refetch,
     } = useAllRoutes(vehicleTypeFilter);
+
+    const deleteMut = useDeleteRoute();
 
     const routes = useMemo(
         () =>
@@ -79,14 +98,15 @@ export default function RoutesPage() {
     ], []);
 
     const rowActions = (row) => {
+        const route = row.original;
         return (
             <div className="flex gap-1 justify-end">
                 <Button
                     size="icon"
                     variant="ghost"
                     onClick={() => {
-                        // TODO: Implementar ver detalles
-                        console.log("Ver ruta:", row.original);
+                        // TODO: Implementar vista de detalles en otra página
+                        console.log("Ver ruta:", route);
                     }}
                     title="Ver"
                 >
@@ -96,8 +116,7 @@ export default function RoutesPage() {
                     size="icon"
                     variant="ghost"
                     onClick={() => {
-                        // TODO: Implementar editar
-                        console.log("Editar ruta:", row.original);
+                        navigate(`/routes/edit/${route.id}`);
                     }}
                     title="Editar"
                 >
@@ -107,8 +126,8 @@ export default function RoutesPage() {
                     size="icon"
                     variant="ghost"
                     onClick={() => {
-                        // TODO: Implementar eliminar
-                        console.log("Eliminar ruta:", row.original);
+                        setRouteToDelete(route);
+                        setConfirmOpen(true);
                     }}
                     title="Eliminar"
                 >
@@ -147,9 +166,7 @@ export default function RoutesPage() {
                             ))}
                         </div>
                         <Button
-                            onClick={() => {
-                                // TODO: Implementar nueva ruta
-                            }}
+                            onClick={() => navigate("/routes/create")}
                         >
                             <Plus className="mr-2 size-4" />
                             Nueva ruta
@@ -178,6 +195,41 @@ export default function RoutesPage() {
                     )}
                 </div>
             </div>
+
+            {/* Dialog de confirmación de eliminación */}
+            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Eliminar ruta?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {routeToDelete
+                                ? `Esta acción eliminará la ruta "${routeToDelete.name}". Esta acción no se puede deshacer.`
+                                : "Esta acción no se puede deshacer."}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                if (!routeToDelete) return;
+                                try {
+                                    await deleteMut.mutateAsync(routeToDelete.id);
+                                    toast.success("Ruta eliminada", {
+                                        description: routeToDelete.name,
+                                    });
+                                    setConfirmOpen(false);
+                                    setRouteToDelete(null);
+                                    refetch();
+                                } catch (err) {
+                                    toast.error(getErrorDetail(err, "Error al eliminar"));
+                                }
+                            }}
+                        >
+                            Eliminar
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

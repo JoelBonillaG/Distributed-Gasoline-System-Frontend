@@ -87,6 +87,7 @@ export default function App() {
                 <Route path="/routes" element={<RoutesPage />} />
                 <Route path="/routes/create" element={<FormRoutePage />} />
                 <Route path="/routes/edit/:id" element={<FormRoutePage />} />
+                <Route path="/routes/view/:id" element={<FormRoutePage />} />
               </Route>
             </Route>
           </Route>

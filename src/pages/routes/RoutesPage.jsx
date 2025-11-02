@@ -105,8 +105,7 @@ export default function RoutesPage() {
                     size="icon"
                     variant="ghost"
                     onClick={() => {
-                        // TODO: Implementar vista de detalles en otra página
-                        console.log("Ver ruta:", route);
+                        navigate(`/routes/view/${route.id}`);
                     }}
                     title="Ver"
                 >

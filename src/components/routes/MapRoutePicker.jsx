@@ -28,7 +28,7 @@ function MapEvents({ onMapClick }) {
 // Componente eliminado - ya no se usa zoom automático
 
 // Componente para manejar el routing de Leaflet
-function LeafletRouting({ origin, destination, onRouteUpdate }) {
+function LeafletRouting({ origin, destination, onRouteUpdate, hideDirectionsPanel = false }) {
   const map = useMap();
   const routingControlRef = useRef(null);
 
@@ -63,6 +63,14 @@ function LeafletRouting({ origin, destination, onRouteUpdate }) {
             createMarker: () => null,
             show: false, // No mostrar panel de direcciones
           }).addTo(map);
+
+          // Ocultar el panel de direcciones con CSS si se requiere
+          if (hideDirectionsPanel) {
+            const panel = routingControlRef.current.getContainer();
+            if (panel) {
+              panel.style.display = 'none';
+            }
+          }
 
           // Guardar distancia cuando se carga la ruta
           routingControlRef.current.on("routesfound", function (e) {
@@ -106,10 +114,15 @@ export default function MapRoutePicker({
   destination = null,
   onOriginChange,
   onDestinationChange,
-  mode = "create", // create o edit
+  mode = "create", // create, edit o view
+  disabled = false,
+  hideDirectionsPanel = false, // Ocultar panel de direcciones de Leaflet Routing Machine
 }) {
   const mapRef = useRef(null);
   const [currentPoint, setCurrentPoint] = useState(null); // null, 'origin', 'destination'
+  
+  // Si está deshabilitado o en modo view, no permitir interacción
+  const isDisabled = disabled || mode === "view";
 
   // Iconos personalizados para origen y destino
   const originIcon = L.icon({
@@ -132,6 +145,8 @@ export default function MapRoutePicker({
 
   // Manejar clic en el mapa
   const handleMapClick = async (e) => {
+    if (isDisabled) return; // No permitir clics si está deshabilitado
+    
     const { lat, lng } = e.latlng;
     
     // Determinar qué punto actualizar
@@ -165,15 +180,31 @@ export default function MapRoutePicker({
     setCurrentPoint(null);
   };
 
+  // Ocultar panel de direcciones con CSS si se requiere
+  useEffect(() => {
+    if (hideDirectionsPanel) {
+      const style = document.createElement('style');
+      style.textContent = `
+        .leaflet-routing-container {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+      return () => {
+        document.head.removeChild(style);
+      };
+    }
+  }, [hideDirectionsPanel]);
+
   return (
-    <div className="relative w-full h-[500px] rounded-xl border overflow-hidden bg-muted/20">
-      {!currentPoint && origin && destination && (
+    <div className={`relative w-full h-[500px] rounded-xl border overflow-hidden ${isDisabled ? "bg-muted/40 opacity-75" : "bg-muted/20"}`}>
+      {!isDisabled && !currentPoint && origin && destination && (
         <div className="absolute top-2 right-2 z-[1000] bg-blue-500/90 backdrop-blur-sm rounded-lg shadow-lg p-2 text-white text-sm font-medium">
           Haz clic para seleccionar origen o destino
         </div>
       )}
 
-      {(origin || destination) && (
+      {!isDisabled && (origin || destination) && (
         <div className="absolute bottom-2 left-2 z-[1000] bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-2 flex gap-2">
           <button
             type="button"
@@ -224,7 +255,12 @@ export default function MapRoutePicker({
         />
         
         <MapEvents onMapClick={handleMapClick} />
-        <LeafletRouting origin={origin} destination={destination} onRouteUpdate={onDestinationChange} />
+        <LeafletRouting 
+          origin={origin} 
+          destination={destination} 
+          onRouteUpdate={onDestinationChange}
+          hideDirectionsPanel={hideDirectionsPanel}
+        />
 
         {origin && (
           <Marker

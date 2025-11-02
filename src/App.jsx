@@ -34,6 +34,8 @@ import HeavyVehicleUnitsPage from "@/pages/vehicles/HeavyVehicleUnitsPage.jsx";
 import UsersPage from "./pages/users/UsersPage";
 import DriversPage from "./pages/drivers/DriversPage";
 import LicenseTypesPage from "./pages/license-types";
+import RoutesPage from "./pages/routes/RoutesPage";
+import FormRoutePage from "./pages/routes/FormRoutePage";
 
 function RoleBasedHome() {
   const { user } = useAuth();
@@ -92,6 +94,10 @@ export default function App() {
                 <Route path="/admin/users" element={<UsersPage />} />
                 <Route path="/drivers" element={<DriversPage />} />
                 <Route path="/license-types" element={<LicenseTypesPage />} />
+                <Route path="/routes" element={<RoutesPage />} />
+                <Route path="/routes/create" element={<FormRoutePage />} />
+                <Route path="/routes/edit/:id" element={<FormRoutePage />} />
+                <Route path="/routes/view/:id" element={<FormRoutePage />} />
               </Route>
             </Route>
           </Route>

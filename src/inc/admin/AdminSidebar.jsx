@@ -321,7 +321,7 @@ export default function AdminSidebar() {
         roles: ["ADMIN"],
       },
       {
-        to: "/admin/generic",
+        to: "/routes",
         icon: TestTube2,
         label: "Rutas",
         roles: ["ADMIN"],

@@ -51,16 +51,18 @@ export const AuthProvider = ({ children }) => {
     try {
       const data = await authService.login(dni, password);
       const token = data?.accessToken;
-      const profile =
-        data?.user ??
-        (token
-          ? (setAccessToken(token), await authService.getProfile())
-          : null);
 
-      if (!token || !profile) throw new Error("Credenciales inválidas");
+      if (!token) throw new Error("Credenciales inválidas");
+
+      // Guardar token antes de hacer getProfile
+      setAccessToken(token);
+      
+      // Obtener perfil
+      const profile = await authService.getProfile();
+
+      if (!profile) throw new Error("No se pudo obtener el perfil");
 
       console.log("Llego perfil:", profile);
-      setAccessToken(token);
       setUser(profile);
       setIsAuthenticated(true);
       return { success: true, user: profile };

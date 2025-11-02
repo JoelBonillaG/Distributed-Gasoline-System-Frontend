@@ -1,5 +1,5 @@
 import api from "./api";
-import { clearTokens, setAccessToken } from "@/utils/tokenStorage";
+import { clearTokens } from "@/utils/tokenStorage";
 
 const baseUrl = import.meta.env.VITE_API_URL;
 
@@ -26,10 +26,6 @@ const authService = {
       };
     }
 
-    if (data?.accessToken) {
-      setAccessToken(data.accessToken);
-    }
-
     return data;
   },
 
@@ -41,7 +37,7 @@ const authService = {
 
   // Obtener perfil del usuario autenticado
   getProfile: async () => {
-    const response = await api.get(`${baseUrl}/auth/me`);
+    const response = await api.get("/auth/me");
     return response.data;
   },
 };

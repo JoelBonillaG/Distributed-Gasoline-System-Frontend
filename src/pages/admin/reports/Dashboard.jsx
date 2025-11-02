@@ -11,16 +11,9 @@ export default function Dashboard() {
         icon={BarChart3}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Gráfico de consumo de combustible */}
         <FuelConsumptionChart />
-
-        {/* Espacio para futuras métricas */}
-        <div className="rounded-xl border bg-card p-6 flex items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground text-center">
-            Espacio disponible para más métricas
-          </p>
-        </div>
       </div>
     </div>
   );

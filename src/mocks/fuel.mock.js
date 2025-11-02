@@ -73,6 +73,14 @@ export const generateMockFuelReport = (startDate, endDate) => {
     ? ((heavyDifference / heavyEstimated) * 100) 
     : 0;
 
+  // Generar valores para ANY (suma de LIGHT y HEAVY)
+  const anyEstimated = lightEstimated + heavyEstimated;
+  const anyActual = lightActual + heavyActual;
+  const anyDifference = anyActual - anyEstimated;
+  const anyDeviation = anyEstimated > 0 
+    ? ((anyDifference / anyEstimated) * 100) 
+    : 0;
+
   return {
     LIGHT: {
       totalTrips: Math.round(45 * multiplier),
@@ -87,6 +95,13 @@ export const generateMockFuelReport = (startDate, endDate) => {
       actual: heavyActual,
       difference: heavyDifference,
       deviation: Math.round(heavyDeviation * 10) / 10, // Redondear a 1 decimal
+    },
+    ANY: {
+      totalTrips: Math.round((45 + 28) * multiplier),
+      estimated: anyEstimated,
+      actual: anyActual,
+      difference: anyDifference,
+      deviation: Math.round(anyDeviation * 10) / 10, // Redondear a 1 decimal
     },
   };
 };

@@ -13,13 +13,14 @@ import {
 } from "@/components/ui/shadcn/select";
 import { PageHeading } from "@/components/ui/typography/Heading";
 import { Separator } from "@/components/ui/shadcn/separator";
-import { Loader2, Plus, Truck, MapPin, Route, User, Users, Car, ChevronDown } from "lucide-react";
+import { Loader2, Plus, Truck, MapPin, Route, User, Users, Car, ChevronDown, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import MapRoutePicker from "@/components/routes/MapRoutePicker";
 import { useAddRoute } from "@/hooks/use-routes";
 import { useAddTrip, useAssignableDrivers, useAssignableVehicles, useAssignableSupervisors } from "@/hooks/use-trips";
 import { useAllRoutes } from "@/hooks/use-routes";
 import { parseFieldErrors, getErrorDetail } from "@/services/trips.service";
+import { reverseGeocode } from "@/services/geocoding.service";
 
 const VEHICLE_TYPE_OPTIONS = [
   { value: "LIVIANO", label: "Liviano" },
@@ -34,6 +35,7 @@ export default function FormCreateTripPage() {
   const [destination, setDestination] = useState(null);
   const [serverErrors, setServerErrors] = useState({});
   const [createdRouteId, setCreatedRouteId] = useState(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   // Hooks para datos asignables
   const { data: assignableDrivers = [], isLoading: isLoadingDrivers } = useAssignableDrivers();
@@ -71,6 +73,60 @@ export default function FormCreateTripPage() {
       vehicleId: "",
     },
   });
+
+  // Obtener ubicación actual
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Tu navegador no soporta geolocalización");
+      return;
+    }
+
+    setIsGettingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const address = await reverseGeocode(latitude, longitude);
+          
+          const point = {
+            lat: latitude,
+            lng: longitude,
+            name: address,
+          };
+          
+          handleOriginChange(point);
+          toast.success("Ubicación actual establecida como origen");
+        } catch (error) {
+          console.error("Error al obtener la dirección:", error);
+          toast.error("Error al obtener la dirección de la ubicación");
+        } finally {
+          setIsGettingLocation(false);
+        }
+      },
+      (error) => {
+        setIsGettingLocation(false);
+        let errorMessage = "Error al obtener tu ubicación";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Permiso de ubicación denegado. Por favor, permite el acceso a tu ubicación.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Ubicación no disponible.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Tiempo de espera agotado al obtener la ubicación.";
+            break;
+        }
+        toast.error(errorMessage);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
 
   // Manejar cambios en el origen desde el mapa
   const handleOriginChange = (point) => {
@@ -277,7 +333,28 @@ export default function FormCreateTripPage() {
 
           {/* Mapa */}
           <div className="rounded-xl border bg-card p-6">
-            <h4 className="text-base font-semibold mb-4">Selecciona origen y destino</h4>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-base font-semibold">Selecciona origen y destino</h4>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGetCurrentLocation}
+                disabled={isGettingLocation}
+              >
+                {isGettingLocation ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Obteniendo ubicación...
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="mr-2 size-4" />
+                    Usar mi ubicación
+                  </>
+                )}
+              </Button>
+            </div>
             <MapRoutePicker
               origin={origin}
               destination={destination}

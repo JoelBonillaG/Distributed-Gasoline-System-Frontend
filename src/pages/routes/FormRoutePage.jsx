@@ -13,11 +13,12 @@ import {
   SelectValue,
 } from "@/components/ui/shadcn/select";
 import { PageHeading } from "@/components/ui/typography/Heading";
-import { MapPin, Loader2 } from "lucide-react";
+import { MapPin, Loader2, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import MapRoutePicker from "@/components/routes/MapRoutePicker";
 import { useAddRoute, useUpdateRoute, useRoute } from "@/hooks/use-routes";
 import { parseFieldErrors, getErrorDetail } from "@/services/routes.service";
+import { reverseGeocode } from "@/services/geocoding.service";
 
 const VEHICLE_TYPE_OPTIONS = [
   { value: "LIVIANO", label: "Liviano" },
@@ -39,6 +40,7 @@ export default function FormRoutePage() {
   const [destination, setDestination] = useState(null);
   const [serverErrors, setServerErrors] = useState({});
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const hasResetForm = useRef(false);
 
   // Hooks para fetch/update
@@ -135,16 +137,16 @@ export default function FormRoutePage() {
     }
   }, [isEditMode, isViewMode, routeData]);
 
-  // Mostrar loading overlay con delay mínimo de 2 segundos en view/edit
+  // Mostrar loading overlay con delay mínimo de 3 segundos en view/edit
   useEffect(() => {
     if ((isViewMode || isEditMode) && id) {
       // Mostrar overlay cuando empieza a cargar
       setShowLoadingOverlay(true);
       
-      // Ocultar después de 2 segundos o cuando los datos estén listos
+      // Ocultar después de 3 segundos o cuando los datos estén listos
       const timer = setTimeout(() => {
         setShowLoadingOverlay(false);
-      }, 2000);
+      }, 3000);
 
       return () => clearTimeout(timer);
     } else {
@@ -166,6 +168,60 @@ export default function FormRoutePage() {
       });
     }
   }, [serverErrors, clearErrors, setError]);
+
+  // Obtener ubicación actual
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Tu navegador no soporta geolocalización");
+      return;
+    }
+
+    setIsGettingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const address = await reverseGeocode(latitude, longitude);
+          
+          const point = {
+            lat: latitude,
+            lng: longitude,
+            name: address,
+          };
+          
+          handleOriginChange(point);
+          toast.success("Ubicación actual establecida como origen");
+        } catch (error) {
+          console.error("Error al obtener la dirección:", error);
+          toast.error("Error al obtener la dirección de la ubicación");
+        } finally {
+          setIsGettingLocation(false);
+        }
+      },
+      (error) => {
+        setIsGettingLocation(false);
+        let errorMessage = "Error al obtener tu ubicación";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Permiso de ubicación denegado. Por favor, permite el acceso a tu ubicación.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "Ubicación no disponible.";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "Tiempo de espera agotado al obtener la ubicación.";
+            break;
+        }
+        toast.error(errorMessage);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
 
   // Manejar cambios en el origen desde el mapa
   const handleOriginChange = (point) => {
@@ -328,7 +384,30 @@ export default function FormRoutePage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Mapa interactivo */}
         <div className="rounded-xl border bg-card p-6">
-          <h3 className="text-lg font-semibold mb-4">Selecciona origen y destino</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Selecciona origen y destino</h3>
+            {canEditMap && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGetCurrentLocation}
+                disabled={isGettingLocation || isReadOnly}
+              >
+                {isGettingLocation ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Obteniendo ubicación...
+                  </>
+                ) : (
+                  <>
+                    <Navigation className="mr-2 size-4" />
+                    Usar mi ubicación
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
           <MapRoutePicker
             origin={origin}
             destination={destination}

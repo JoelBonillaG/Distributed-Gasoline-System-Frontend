@@ -32,6 +32,9 @@ import DriversPage from "./pages/drivers/DriversPage";
 import LicenseTypesPage from "./pages/license-types";
 import RoutesPage from "./pages/routes/RoutesPage";
 import FormRoutePage from "./pages/routes/FormRoutePage";
+import TripsPage from "./pages/trips/TripsPage";
+import FormCreateTripPage from "./pages/trips/FormCreateTripPage";
+import TripDetailPage from "./pages/trips/TripDetailPage";
 
 function RoleBasedHome() {
   const { user } = useAuth();
@@ -40,9 +43,8 @@ function RoleBasedHome() {
     : [];
 
   console.log("🧱 User roles:", roles);
-  if (roles.includes("ADMIN"))
-    return <Navigate to="/admin/playground" replace />;
-  return <Navigate to="/forbidden" replace />;
+  // Redirigir a trips para todos los roles (ADMIN, SUPERVISOR, DRIVER)
+  return <Navigate to="/trips" replace />;
 }
 
 export default function App() {
@@ -77,6 +79,14 @@ export default function App() {
               <Route path="/profile" element={<ProfilePage />} />
               {/* Index home según rol */}
               <Route index element={<RoleBasedHome />} />
+
+              {/* --- TRIPS: Available to all authenticated users --- */}
+              <Route element={<ProtectedRoute allowedRoles={["ADMIN", "SUPERVISOR", "DRIVER"]} />}>
+                <Route path="/trips" element={<TripsPage />} />
+                <Route path="/trips/create" element={<FormCreateTripPage />} />
+                <Route path="/trips/view/:id" element={<TripDetailPage />} />
+                <Route path="/trips/:id" element={<TripDetailPage />} />
+              </Route>
 
               {/* --- ADMIN ONLY --- */}
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>

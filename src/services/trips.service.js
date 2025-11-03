@@ -117,12 +117,32 @@ export const getAssignableDrivers = async () => {
 
 /**
  * Obtener vehículos asignables
+ * @param {Object} filters - Filtros opcionales
+ * @param {string[]} filters.driverLicenseTypeCodes - Códigos de licencia del conductor (ej: ["B", "C"])
+ * @param {string} filters.routeVehicleType - Tipo de vehículo de la ruta (LIVIANO, PESADO, CUALQUIERA)
  * @returns {Promise<Array>} Lista de vehículos disponibles
  */
-export const getAssignableVehicles = async () => {
-  const res = await api.get("/trips/assignable/vehicles");
-  // El backend puede devolver { vehicles: [...] } o directamente un array
-  return res.data?.vehicles || res.data || [];
+export const getAssignableVehicles = async (filters = {}) => {
+  // Si hay filtros (especialmente arrays), usar POST para evitar problemas con serialización de arrays en query params
+  const hasFilters = (filters.driverLicenseTypeCodes && filters.driverLicenseTypeCodes.length > 0) || filters.routeVehicleType;
+  
+  if (hasFilters) {
+    // Usar POST cuando hay filtros para enviar arrays correctamente en el body
+    const body = {};
+    if (filters.driverLicenseTypeCodes && filters.driverLicenseTypeCodes.length > 0) {
+      body.driverLicenseTypeCodes = filters.driverLicenseTypeCodes;
+    }
+    if (filters.routeVehicleType) {
+      body.routeVehicleType = filters.routeVehicleType;
+    }
+    
+    const res = await api.post("/trips/assignable/vehicles", body);
+    return res.data?.vehicles || res.data || [];
+  } else {
+    // Sin filtros, usar GET
+    const res = await api.get("/trips/assignable/vehicles");
+    return res.data?.vehicles || res.data || [];
+  }
 };
 
 /**

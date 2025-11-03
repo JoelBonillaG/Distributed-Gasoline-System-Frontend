@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Loader2, Truck } from "lucide-react";
+import { ArrowLeft, Truck } from "lucide-react";
 import { Button } from "@/components/ui/shadcn/button";
 import fuelService from "@/services/fuel.service";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ const VehicleDetailsPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const vehicleTypeParam = searchParams.get("vehicleType");
+  const vehicleTypeParam = searchParams.get("type");
 
   const [vehicleDetails, setVehicleDetails] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -180,6 +180,17 @@ const VehicleDetailsPage = () => {
             initialPageSize={10}
             searchable={false}
             className="[&_th]:py-2 [&_td]:py-2 [&_tbody_tr]:cursor-pointer [&_tbody_tr:hover]:bg-muted/50"
+            onRowClick={(row) => {
+              // Validar que vehicleType esté en el intervalo válido (1, 2, 3)
+              const vehicleType = Number.parseInt(vehicleTypeParam, 10);
+              if (![1, 2, 3].includes(vehicleType)) {
+                toast.error("Tipo de vehículo inválido");
+                return;
+              }
+              navigate(
+                `/dashboard/vehicles/${row.original.vehicleId}/routes?type=${vehicleType}`
+              );
+            }}
             emptyMessage={
               loading
                 ? "Cargando..."

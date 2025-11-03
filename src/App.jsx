@@ -40,6 +40,7 @@ import TripsPage from "./pages/trips/TripsPage";
 import FormCreateTripPage from "./pages/trips/FormCreateTripPage";
 import TripDetailPage from "./pages/trips/TripDetailPage";
 import VehicleDetailsPage from "./pages/admin/reports/VehicleDetailsPage";
+import VehicleRoutesPage from "./pages/admin/reports/VehicleRoutesPage";
 
 function RoleBasedHome() {
   const { user } = useAuth();
@@ -127,8 +128,12 @@ export default function App() {
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route
-                  path="/dashboard/vehicle-details"
+                  path="/dashboard/vehicle/details"
                   element={<VehicleDetailsPage />}
+                />
+                <Route
+                  path="/dashboard/vehicles/:vehicleId/routes"
+                  element={<VehicleRoutesPage />}
                 />
                 <Route path="/admin/users" element={<UsersPage />} />
                 <Route path="/drivers" element={<DriversPage />} />

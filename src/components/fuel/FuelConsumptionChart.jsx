@@ -88,7 +88,7 @@ const FuelConsumptionChart = () => {
       return;
     }
 
-    navigate(`/dashboard/vehicle-details?vehicleType=${vehicleType}`);
+    navigate(`/dashboard/vehicle/details?type=${vehicleType}`);
   };
 
   useEffect(() => {

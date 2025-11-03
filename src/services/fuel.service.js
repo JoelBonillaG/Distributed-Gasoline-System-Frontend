@@ -44,6 +44,37 @@ const fuelService = {
       throw error;
     }
   },
+
+  /**
+   * Obtener reporte de rutas por vehículo
+   * @param {number} vehicleId - ID del vehículo
+   * @param {string} status - Estado de las rutas (por defecto: 'TERMINADO')
+   * @param {number} vehicleType - Tipo de vehículo opcional: 0 (UNSPECIFIED), 1 (LIVIANO), 2 (PESADO), 3 (CUALQUIERA)
+   * @returns {Promise<Object>} Datos del reporte con rutas
+   * Formato: { routes: [{ routeId, routeName, originName, destinationName, estimated, actual, difference, deviation }] }
+   */
+  async getVehicleRoutesReport(vehicleId, status = "TERMINADO", vehicleType) {
+    try {
+      const params = {
+        vehicleId,
+        status,
+      };
+
+      // Agregar vehicleType solo si está definido
+      if (vehicleType !== undefined && vehicleType !== null) {
+        params.vehicleType = vehicleType;
+      }
+
+      const response = await api.get("/fuel/reports/vehicle-routes", {
+        params,
+      });
+      console.log("response", response);
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener rutas del vehículo:", error);
+      throw error;
+    }
+  },
 };
 
 export default fuelService;

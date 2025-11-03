@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AdminLayout from "@/layouts/AdminLayout";
-import Playground from "@/pages/admin/Playground";
 import AppToaster from "@/inc/ui/Toaster.jsx";
+import Dashboard from "@/pages/admin/reports/Dashboard";
 import NotFound from "@/pages/NotFound.jsx";
 import Login from "@/pages/auth/Login";
 import ErrorBoundary from "@/utils/ErrorBoundary";
@@ -39,6 +39,8 @@ import FormRoutePage from "./pages/routes/FormRoutePage";
 import TripsPage from "./pages/trips/TripsPage";
 import FormCreateTripPage from "./pages/trips/FormCreateTripPage";
 import TripDetailPage from "./pages/trips/TripDetailPage";
+import VehicleDetailsPage from "./pages/admin/reports/VehicleDetailsPage";
+import VehicleRoutesPage from "./pages/admin/reports/VehicleRoutesPage";
 
 function RoleBasedHome() {
   const { user } = useAuth();
@@ -61,37 +63,61 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/password-recovery" element={<PasswordRecovery />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route element={<AdminLayout />}>
-              <Route path="/admin/playground" element={<Playground />} />
-            </Route>
           </Route>
 
           {/* Bloque protegido: requiere login */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AdminLayout />}>
               {/* Rutas de vehículos livianos */}
-              <Route path="/vehicles/light/models" element={<LightVehiclesPage />} />
-              <Route path="/vehicles/light/units" element={<LightVehicleUnitsPage />} />
+              <Route
+                path="/vehicles/light/models"
+                element={<LightVehiclesPage />}
+              />
+              <Route
+                path="/vehicles/light/units"
+                element={<LightVehicleUnitsPage />}
+              />
 
               {/* Rutas de vehículos pesados */}
-              <Route path="/vehicles/heavy/models" element={<HeavyVehiclesPage />} />
-              <Route path="/vehicles/heavy/units" element={<HeavyVehicleUnitsPage />} />
+              <Route
+                path="/vehicles/heavy/models"
+                element={<HeavyVehiclesPage />}
+              />
+              <Route
+                path="/vehicles/heavy/units"
+                element={<HeavyVehicleUnitsPage />}
+              />
 
               {/* Rutas antiguas de vehículos - mantenidas para compatibilidad */}
               <Route path="/vehicles/models" element={<VehiclesPage />} />
-              <Route path="/vehicles/models/create" element={<CreateVehicleModelPage />} />
-              <Route path="/vehicles/models/edit/:id" element={<EditVehicleModelPage />} />
+              <Route
+                path="/vehicles/models/create"
+                element={<CreateVehicleModelPage />}
+              />
+              <Route
+                path="/vehicles/models/edit/:id"
+                element={<EditVehicleModelPage />}
+              />
               <Route path="/vehicles/units" element={<VehicleUnitsPage />} />
 
               {/* Redirección de /vehicles a vehículos livianos */}
-              <Route path="/vehicles" element={<Navigate to="/vehicles/light/models" replace />} />
+              <Route
+                path="/vehicles"
+                element={<Navigate to="/vehicles/light/models" replace />}
+              />
 
               <Route path="/profile" element={<ProfilePage />} />
               {/* Index home según rol */}
               <Route index element={<RoleBasedHome />} />
 
               {/* --- TRIPS: Available to all authenticated users --- */}
-              <Route element={<ProtectedRoute allowedRoles={["ADMIN", "SUPERVISOR", "DRIVER"]} />}>
+              <Route
+                element={
+                  <ProtectedRoute
+                    allowedRoles={["ADMIN", "SUPERVISOR", "DRIVER"]}
+                  />
+                }
+              >
                 <Route path="/trips" element={<TripsPage />} />
                 <Route path="/trips/create" element={<FormCreateTripPage />} />
                 <Route path="/trips/view/:id" element={<TripDetailPage />} />
@@ -100,7 +126,15 @@ export default function App() {
 
               {/* --- ADMIN ONLY --- */}
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-                <Route path="/admin/" element={<Playground />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route
+                  path="/dashboard/vehicle/details"
+                  element={<VehicleDetailsPage />}
+                />
+                <Route
+                  path="/dashboard/vehicles/:vehicleId/routes"
+                  element={<VehicleRoutesPage />}
+                />
                 <Route path="/admin/users" element={<UsersPage />} />
                 <Route path="/drivers" element={<DriversPage />} />
                 <Route path="/license-types" element={<LicenseTypesPage />} />

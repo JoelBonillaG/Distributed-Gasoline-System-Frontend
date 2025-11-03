@@ -14,7 +14,19 @@ import {
   useSidebar,
 } from "@/components/ui/shadcn/sidebar";
 import { Avatar } from "@/components/ui/shadcn/avatar";
-import { FolderKanban, BookText, BarChart3, TestTube2, Car, ChevronDown, User, UserCog, Truck, Shield, Route } from "lucide-react";
+import {
+  FolderKanban,
+  BookText,
+  BarChart3,
+  TestTube2,
+  Car,
+  ChevronDown,
+  User,
+  UserCog,
+  Truck,
+  Shield,
+  Route,
+} from "lucide-react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import logoUrl from "@/assets/favicon.ico";
 import AuthContext from "@/context/AuthContext";
@@ -96,9 +108,7 @@ function LightVehiclesCollapsibleMenu({ collapsed }) {
               className={[
                 "grid size-7 place-content-center shrink-0 rounded-md mx-0 my-0",
                 "bg-transparent hover:bg-brand-1/25",
-                isLightVehiclesActive
-                  ? "bg-accent text-accent-foreground"
-                  : "",
+                isLightVehiclesActive ? "bg-accent text-accent-foreground" : "",
               ].join(" ")}
             >
               <Car className="size-3.5 shrink-0" />
@@ -200,9 +210,7 @@ function HeavyVehiclesCollapsibleMenu({ collapsed }) {
               className={[
                 "grid size-7 place-content-center shrink-0 rounded-md mx-0 my-0",
                 "bg-transparent hover:bg-brand-1/25",
-                isHeavyVehiclesActive
-                  ? "bg-accent text-accent-foreground"
-                  : "",
+                isHeavyVehiclesActive ? "bg-accent text-accent-foreground" : "",
               ].join(" ")}
             >
               <Truck className="size-3.5 shrink-0" />
@@ -295,9 +303,9 @@ export default function AdminSidebar() {
   const MENU = {
     reports: [
       {
-        to: "/admin/reports",
+        to: "/dashboard",
         icon: BarChart3,
-        label: "Dashboard de Reportes",
+        label: "Dashboard",
         roles: ["ADMIN"],
       },
     ],
@@ -442,22 +450,6 @@ export default function AdminSidebar() {
         </SidebarGroup>
 
         <SidebarSeparator className="sidebar-divider my-2" />
-
-        <Can allowedRoles={["ADMIN"]}>
-          <SidebarGroup>
-            <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
-              Plataforma
-            </SidebarGroupLabel>
-            <SidebarGroupContent className="overflow-hidden">
-              <SidebarMenu>
-                {MENU.platform.map((item) => (
-                  <NavItem key={item.to} {...item} collapsed={collapsed} />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-          <SidebarSeparator className="sidebar-divider my-2" />
-        </Can>
 
         <SidebarGroup>
           <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>

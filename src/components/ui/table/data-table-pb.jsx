@@ -34,6 +34,7 @@ import {
  * - rowActions?: (row) => ReactNode  -> renderiza acciones por fila al final
  * - emptyMessage?: string            -> mensaje cuando no hay filas
  * - className?: string               -> clases extra del contenedor
+ * - onRowClick?: (row) => void       -> callback cuando se hace clic en una fila
  * 
  * Props para paginación del servidor:
  * - manualPagination?: boolean       -> true para paginación del servidor
@@ -70,6 +71,7 @@ export default function DataTable({
     rowActions,
     emptyMessage = "Sin datos",
     className,
+    onRowClick,
     // Props para paginación del servidor
     manualPagination = false,
     pageCount,
@@ -319,6 +321,8 @@ export default function DataTable({
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() ? "selected" : undefined}
+                                    onClick={() => onRowClick && onRowClick(row)}
+                                    className={onRowClick ? "cursor-pointer" : undefined}
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>

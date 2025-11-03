@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { subDays } from "date-fns";
 import {
   ResponsiveContainer,
@@ -8,7 +9,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   LabelList,
 } from "recharts";
 import {
@@ -45,6 +45,8 @@ const CustomLabel = ({ x, y, width, value }) => {
 };
 
 const FuelConsumptionChart = () => {
+  const navigate = useNavigate();
+
   // Función helper para obtener fecha en formato YYYY-MM-DD sin problemas de zona horaria
   const getLocalDateString = (date) => {
     const year = date.getFullYear();
@@ -71,6 +73,24 @@ const FuelConsumptionChart = () => {
   const ESTIMATED_COLOR = "#10b981"; // verde esmeralda - complementa con el naranja
   const REAL_COLOR = "#f97316"; // naranja
 
+  // Función para navegar a la página de detalles
+  const handleViewDetails = (machineType) => {
+    // Mapeo: LIGHT -> 1 (LIVIANO), HEAVY -> 2 (PESADO), ANY -> 3 (CUALQUIERA)
+    const vehicleTypeMap = {
+      LIGHT: 1,
+      HEAVY: 2,
+      ANY: 3,
+    };
+
+    const vehicleType = vehicleTypeMap[machineType];
+    if (!vehicleType) {
+      toast.error("Tipo de vehículo no válido");
+      return;
+    }
+
+    navigate(`/dashboard/vehicle-details?vehicleType=${vehicleType}`);
+  };
+
   useEffect(() => {
     if (startDate && endDate) {
       fetchData();
@@ -86,9 +106,6 @@ const FuelConsumptionChart = () => {
     setLoading(true);
     try {
       const response = await fuelService.getGeneralReport(startDate, endDate);
-
-      // Procesar datos según el formato del backend
-      // Formato esperado: { LIGHT: { estimated, actual }, HEAVY: { estimated, actual }, ANY: { estimated, actual } }
 
       const processedData = {
         LIGHT: {
@@ -114,7 +131,14 @@ const FuelConsumptionChart = () => {
       setData(processedData);
     } catch (error) {
       console.error("Error al obtener datos de combustible:", error);
-      toast.error("Error al cargar los datos del reporte");
+
+      // Mostrar mensaje de error más descriptivo
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Error al cargar los datos del reporte";
+      toast.error(errorMessage);
+
       // Datos vacíos en caso de error
       setData({
         LIGHT: { tipo: "Liviana", label: "Liviana", Estimado: 0, Real: 0 },
@@ -209,7 +233,6 @@ const FuelConsumptionChart = () => {
             </Button>
           </div>
         </div>
-
         {/* Gráficos en grid de 2 columnas */}
         {loading && (!data.LIGHT || !data.HEAVY || !data.ANY) ? (
           <div className="flex items-center justify-center h-64">
@@ -218,25 +241,30 @@ const FuelConsumptionChart = () => {
         ) : data ? (
           <div className="space-y-6">
             {/* Leyenda única en la esquina superior izquierda */}
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: ESTIMATED_COLOR }}
-                />
-                <span className="text-sm font-medium text-foreground">
-                  Estimado
-                </span>
+            <div className="space-y-2">
+              <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded"
+                    style={{ backgroundColor: ESTIMATED_COLOR }}
+                  />
+                  <span className="text-sm font-medium text-foreground">
+                    Estimado
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-4 h-4 rounded"
+                    style={{ backgroundColor: REAL_COLOR }}
+                  />
+                  <span className="text-sm font-medium text-foreground">
+                    Real
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: REAL_COLOR }}
-                />
-                <span className="text-sm font-medium text-foreground">
-                  Real
-                </span>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                Haz clic en las barras para ver detalles globales
+              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -249,6 +277,8 @@ const FuelConsumptionChart = () => {
                   <BarChart
                     data={[data.LIGHT]}
                     margin={{ top: 10, right: 20, left: 10, bottom: 50 }}
+                    onClick={() => handleViewDetails("LIGHT")}
+                    style={{ cursor: "pointer" }}
                   >
                     <CartesianGrid
                       strokeDasharray="3 3"
@@ -329,6 +359,8 @@ const FuelConsumptionChart = () => {
                   <BarChart
                     data={[data.HEAVY]}
                     margin={{ top: 10, right: 20, left: 10, bottom: 50 }}
+                    onClick={() => handleViewDetails("HEAVY")}
+                    style={{ cursor: "pointer" }}
                   >
                     <CartesianGrid
                       strokeDasharray="3 3"
@@ -409,6 +441,8 @@ const FuelConsumptionChart = () => {
                   <BarChart
                     data={[data.ANY]}
                     margin={{ top: 10, right: 20, left: 10, bottom: 50 }}
+                    onClick={() => handleViewDetails("ANY")}
+                    style={{ cursor: "pointer" }}
                   >
                     <CartesianGrid
                       strokeDasharray="3 3"

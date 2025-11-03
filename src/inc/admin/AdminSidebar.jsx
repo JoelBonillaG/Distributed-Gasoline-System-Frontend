@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/shadcn/sidebar";
 import { Avatar } from "@/components/ui/shadcn/avatar";
-import { FolderKanban, BookText, BarChart3, TestTube2, Car, ChevronDown, User, Truck, Shield, Route } from "lucide-react";
+import { FolderKanban, BookText, BarChart3, TestTube2, Car, ChevronDown, User, UserCog, Truck, Shield, Route } from "lucide-react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import logoUrl from "@/assets/favicon.ico";
 import AuthContext from "@/context/AuthContext";
@@ -413,7 +413,8 @@ export default function AdminSidebar() {
             <SidebarMenu>
               {/* Vehículos con collapsible - Solo ADMIN */}
               <Can allowedRoles={["ADMIN"]}>
-                <VehiclesCollapsibleMenu collapsed={collapsed} />
+                <LightVehiclesCollapsibleMenu collapsed={collapsed} />
+                <HeavyVehiclesCollapsibleMenu collapsed={collapsed} />
               </Can>
 
               {/* Rutas - Solo ADMIN */}

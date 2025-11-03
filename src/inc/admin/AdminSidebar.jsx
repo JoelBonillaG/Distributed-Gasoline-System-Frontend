@@ -22,9 +22,10 @@ import {
   Car,
   ChevronDown,
   User,
+  UserCog,
   Truck,
   Shield,
-  UserCog,
+  Route,
 } from "lucide-react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import logoUrl from "@/assets/favicon.ico";
@@ -328,9 +329,25 @@ export default function AdminSidebar() {
         roles: ["ADMIN"],
       },
       {
-        to: "/admin/generic",
+        to: "/routes",
         icon: TestTube2,
         label: "Rutas",
+        roles: ["ADMIN"],
+      },
+    ],
+    trips: [
+      {
+        to: "/trips",
+        icon: Route,
+        label: "Viajes",
+        roles: ["ADMIN", "SUPERVISOR", "DRIVER"],
+      },
+    ],
+    platform: [
+      {
+        to: "/admin/playground",
+        icon: FolderKanban,
+        label: "Playground",
         roles: ["ADMIN"],
       },
     ],
@@ -402,13 +419,13 @@ export default function AdminSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent className="overflow-hidden">
             <SidebarMenu>
-              {/* Vehículos Livianos con collapsible */}
-              <LightVehiclesCollapsibleMenu collapsed={collapsed} />
+              {/* Vehículos con collapsible - Solo ADMIN */}
+              <Can allowedRoles={["ADMIN"]}>
+                <LightVehiclesCollapsibleMenu collapsed={collapsed} />
+                <HeavyVehiclesCollapsibleMenu collapsed={collapsed} />
+              </Can>
 
-              {/* Vehículos Pesados con collapsible */}
-              <HeavyVehiclesCollapsibleMenu collapsed={collapsed} />
-
-              {/* Rutas con roles específicos */}
+              {/* Rutas - Solo ADMIN */}
               <Can allowedRoles={["ADMIN"]}>
                 {MENU.routes
                   .filter((i) => i.roles?.includes("ADMIN"))
@@ -416,13 +433,18 @@ export default function AdminSidebar() {
                     <NavItem key={item.to} {...item} collapsed={collapsed} />
                   ))}
               </Can>
-              <Can allowedRoles={["DOCTOR"]}>
-                {MENU.routes
-                  .filter((i) => i.roles?.includes("DOCTOR"))
-                  .map((item) => (
-                    <NavItem key={item.to} {...item} collapsed={collapsed} />
-                  ))}
-              </Can>
+
+              {/* Viajes - Todos los roles autenticados */}
+              {MENU.trips
+                .filter((i) => {
+                  const userRoles = Array.isArray(user?.roles)
+                    ? user.roles.map((r) => String(r).toUpperCase())
+                    : [];
+                  return i.roles?.some((role) => userRoles.includes(role));
+                })
+                .map((item) => (
+                  <NavItem key={item.to} {...item} collapsed={collapsed} />
+                ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

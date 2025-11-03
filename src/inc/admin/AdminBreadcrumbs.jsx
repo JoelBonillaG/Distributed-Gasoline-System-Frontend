@@ -26,6 +26,7 @@ const TITLE_MAP = {
     "units": "Unidades",
     "create": "Crear",
     "edit": "Editar",
+    "view": "Ver",
     "new": "Nuevo",
 };
 

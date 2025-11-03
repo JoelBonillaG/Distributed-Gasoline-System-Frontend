@@ -34,6 +34,11 @@ import HeavyVehicleUnitsPage from "@/pages/vehicles/HeavyVehicleUnitsPage.jsx";
 import UsersPage from "./pages/users/UsersPage";
 import DriversPage from "./pages/drivers/DriversPage";
 import LicenseTypesPage from "./pages/license-types";
+import RoutesPage from "./pages/routes/RoutesPage";
+import FormRoutePage from "./pages/routes/FormRoutePage";
+import TripsPage from "./pages/trips/TripsPage";
+import FormCreateTripPage from "./pages/trips/FormCreateTripPage";
+import TripDetailPage from "./pages/trips/TripDetailPage";
 import VehicleDetailsPage from "./pages/admin/reports/VehicleDetailsPage";
 
 function RoleBasedHome() {
@@ -43,8 +48,8 @@ function RoleBasedHome() {
     : [];
 
   console.log("🧱 User roles:", roles);
-  if (roles.includes("ADMIN")) return <Navigate to="/dashboard" replace />;
-  return <Navigate to="/forbidden" replace />;
+  // Redirigir a trips para todos los roles (ADMIN, SUPERVISOR, DRIVER)
+  return <Navigate to="/trips" replace />;
 }
 
 export default function App() {
@@ -104,6 +109,20 @@ export default function App() {
               {/* Index home según rol */}
               <Route index element={<RoleBasedHome />} />
 
+              {/* --- TRIPS: Available to all authenticated users --- */}
+              <Route
+                element={
+                  <ProtectedRoute
+                    allowedRoles={["ADMIN", "SUPERVISOR", "DRIVER"]}
+                  />
+                }
+              >
+                <Route path="/trips" element={<TripsPage />} />
+                <Route path="/trips/create" element={<FormCreateTripPage />} />
+                <Route path="/trips/view/:id" element={<TripDetailPage />} />
+                <Route path="/trips/:id" element={<TripDetailPage />} />
+              </Route>
+
               {/* --- ADMIN ONLY --- */}
               <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -114,6 +133,10 @@ export default function App() {
                 <Route path="/admin/users" element={<UsersPage />} />
                 <Route path="/drivers" element={<DriversPage />} />
                 <Route path="/license-types" element={<LicenseTypesPage />} />
+                <Route path="/routes" element={<RoutesPage />} />
+                <Route path="/routes/create" element={<FormRoutePage />} />
+                <Route path="/routes/edit/:id" element={<FormRoutePage />} />
+                <Route path="/routes/view/:id" element={<FormRoutePage />} />
               </Route>
             </Route>
           </Route>

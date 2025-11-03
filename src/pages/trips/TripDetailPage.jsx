@@ -86,69 +86,109 @@ const formatDate = (timestamp) => {
 };
 
 // Componente para mostrar la ruta en el mapa
-function TripRouteMap({ routeData, currentLocation, statusNumber }) {
+function TripRouteMap({ routeData, currentLocation, statusNumber, trip }) {
   const map = useMap();
+  const routingControlsRef = React.useRef([]);
 
   React.useEffect(() => {
     if (!routeData?.originLat || !routeData?.destinationLat) return;
-    if (statusNumber !== 2 || !currentLocation) {
-      // Si no está en ruta o no hay ubicación actual, mostrar ruta completa
-      if (window.L && window.L.Routing && window.L.Routing.control) {
-        const routingControl = window.L.Routing.control({
-          waypoints: [
-            window.L.latLng(routeData.originLat, routeData.originLng),
-            window.L.latLng(routeData.destinationLat, routeData.destinationLng),
-          ],
-          language: 'es',
-          lineOptions: {
-            addWaypoints: false,
-            styles: [
-              { color: "#3b82f6", weight: 4, opacity: 0.8 },
-            ],
-          },
-          routeWhileDragging: false,
-          draggableWaypoints: false,
-          createMarker: () => null,
-          show: false,
-        }).addTo(map);
 
-        const panel = routingControl.getContainer();
-        if (panel) panel.style.display = 'none';
-
-        return () => {
-          map.removeControl(routingControl);
-        };
+    // Limpiar controles anteriores
+    routingControlsRef.current.forEach(control => {
+      try {
+        map.removeControl(control);
+      } catch (e) {
+        console.warn("Error removing routing control:", e);
       }
-    } else {
-      // Si está en ruta y hay ubicación actual, mostrar ruta desde origen hasta ubicación actual
-      if (window.L && window.L.Routing && window.L.Routing.control) {
-        const routingControl = window.L.Routing.control({
-          waypoints: [
-            window.L.latLng(routeData.originLat, routeData.originLng),
-            window.L.latLng(currentLocation.lat, currentLocation.lng),
+    });
+    routingControlsRef.current = [];
+
+    // Obtener coordenadas de la ruta (preferir las de trip, luego routeData)
+    const originLat = trip?.originLat ?? routeData.originLat;
+    const originLng = trip?.originLng ?? routeData.originLng;
+    const destLat = trip?.destinationLat ?? routeData.destinationLat;
+    const destLng = trip?.destinationLng ?? routeData.destinationLng;
+
+    if (!window.L || !window.L.Routing || !window.L.Routing.control) return;
+
+    // Siempre mostrar la ruta planificada completa (origen → destino) en azul
+    const plannedRouteControl = window.L.Routing.control({
+      waypoints: [
+        window.L.latLng(originLat, originLng),
+        window.L.latLng(destLat, destLng),
+      ],
+      language: 'es',
+      lineOptions: {
+        addWaypoints: false,
+        styles: [
+          { color: "#3b82f6", weight: 4, opacity: 0.6, dashArray: "10, 5" }, // Azul punteado para ruta planificada
+        ],
+      },
+      routeWhileDragging: false,
+      draggableWaypoints: false,
+      createMarker: () => null,
+      show: false,
+    }).addTo(map);
+
+    const plannedPanel = plannedRouteControl.getContainer();
+    if (plannedPanel) plannedPanel.style.display = 'none';
+    routingControlsRef.current.push(plannedRouteControl);
+
+    // Si está en ruta y hay ubicación actual, también mostrar la ruta recorrida (origen → ubicación actual) en verde
+    if (statusNumber === 2 && currentLocation) {
+      const traveledRouteControl = window.L.Routing.control({
+        waypoints: [
+          window.L.latLng(originLat, originLng),
+          window.L.latLng(currentLocation.lat, currentLocation.lng),
+        ],
+        language: 'es',
+        lineOptions: {
+          addWaypoints: false,
+          styles: [
+            { color: "#22c55e", weight: 5, opacity: 0.9 }, // Verde sólido para ruta recorrida
           ],
-          language: 'es',
-          lineOptions: {
-            addWaypoints: false,
-            styles: [
-              { color: "#22c55e", weight: 4, opacity: 0.8 }, // Verde para ruta recorrida
-            ],
-          },
-          routeWhileDragging: false,
-          draggableWaypoints: false,
-          createMarker: () => null,
-          show: false,
-        }).addTo(map);
+        },
+        routeWhileDragging: false,
+        draggableWaypoints: false,
+        createMarker: () => null,
+        show: false,
+      }).addTo(map);
 
-        const panel = routingControl.getContainer();
-        if (panel) panel.style.display = 'none';
-
-        return () => {
-          map.removeControl(routingControl);
-        };
-      }
+      const traveledPanel = traveledRouteControl.getContainer();
+      if (traveledPanel) traveledPanel.style.display = 'none';
+      routingControlsRef.current.push(traveledRouteControl);
     }
-  }, [map, routeData, currentLocation, statusNumber]);
+
+    // Ajustar zoom para mostrar toda la ruta y ubicaciones relevantes
+    const bounds = window.L.latLngBounds([
+      [originLat, originLng],
+      [destLat, destLng],
+    ]);
+
+    // Si hay ubicación actual, incluirla en los bounds
+    if (statusNumber === 2 && currentLocation) {
+      bounds.extend([currentLocation.lat, currentLocation.lng]);
+    }
+
+    // Ajustar el mapa para mostrar todos los puntos con un padding
+    setTimeout(() => {
+      map.fitBounds(bounds, {
+        padding: [50, 50], // Padding en píxeles
+        maxZoom: 15, // Zoom máximo permitido
+      });
+    }, 500); // Pequeño delay para asegurar que las rutas se rendericen
+
+    return () => {
+      routingControlsRef.current.forEach(control => {
+        try {
+          map.removeControl(control);
+        } catch (e) {
+          console.warn("Error removing routing control on cleanup:", e);
+        }
+      });
+      routingControlsRef.current = [];
+    };
+  }, [map, routeData, currentLocation, statusNumber, trip]);
 
   return null;
 }
@@ -496,14 +536,23 @@ export default function TripDetailPage() {
           <div className="rounded-xl border overflow-hidden h-[500px] bg-muted/20">
             <MapContainer
               center={
-                statusNumber === 2 && trip.currentLat && trip.currentLng
-                  ? [trip.currentLat, trip.currentLng]
-                  : routeData.originLat
-                  ? [routeData.originLat, routeData.originLng]
-                  : [-1.8312, -78.1834]
+                (() => {
+                  const originLat = trip?.originLat ?? routeData?.originLat;
+                  const originLng = trip?.originLng ?? routeData?.originLng;
+                  const destLat = trip?.destinationLat ?? routeData?.destinationLat;
+                  const destLng = trip?.destinationLng ?? routeData?.destinationLng;
+                  
+                  if (originLat && destLat) {
+                    return [(originLat + destLat) / 2, (originLng + destLng) / 2];
+                  } else if (originLat) {
+                    return [originLat, originLng];
+                  }
+                  return [-1.8312, -78.1834];
+                })()
               }
-              zoom={statusNumber === 2 && trip.currentLat ? 12 : 8}
+              zoom={8}
               style={{ height: "100%", width: "100%" }}
+              zoomControl={true}
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -518,12 +567,13 @@ export default function TripDetailPage() {
                     : null
                 }
                 statusNumber={statusNumber}
+                trip={trip}
               />
 
               {/* Marcador de origen */}
-              {routeData.originLat && routeData.originLng && (
+              {(trip?.originLat ?? routeData?.originLat) && (trip?.originLng ?? routeData?.originLng) && (
                 <Marker
-                  position={[routeData.originLat, routeData.originLng]}
+                  position={[trip?.originLat ?? routeData.originLat, trip?.originLng ?? routeData.originLng]}
                   icon={L.icon({
                     iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
                     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
@@ -531,7 +581,7 @@ export default function TripDetailPage() {
                     iconAnchor: [12, 41],
                   })}
                 >
-                  <Popup>Origen: {routeData.originName || "Punto de origen"}</Popup>
+                  <Popup>Origen: {originName}</Popup>
                 </Marker>
               )}
 
@@ -556,9 +606,9 @@ export default function TripDetailPage() {
               )}
 
               {/* Marcador de destino */}
-              {routeData.destinationLat && routeData.destinationLng && (
+              {(trip?.destinationLat ?? routeData?.destinationLat) && (trip?.destinationLng ?? routeData?.destinationLng) && (
                 <Marker
-                  position={[routeData.destinationLat, routeData.destinationLng]}
+                  position={[trip?.destinationLat ?? routeData.destinationLat, trip?.destinationLng ?? routeData.destinationLng]}
                   icon={L.icon({
                     iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
                     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
@@ -566,7 +616,7 @@ export default function TripDetailPage() {
                     iconAnchor: [12, 41],
                   })}
                 >
-                  <Popup>Destino: {routeData.destinationName || "Punto de destino"}</Popup>
+                  <Popup>Destino: {destinationName}</Popup>
                 </Marker>
               )}
             </MapContainer>
@@ -575,14 +625,16 @@ export default function TripDetailPage() {
             <p className="text-xs text-muted-foreground mt-2">
               🟢 Verde: Origen | 🔵 Azul: Ubicación actual | 🟠 Naranja: Destino
               <br />
-              La línea verde muestra la ruta recorrida desde el origen hasta tu ubicación actual.
+              La línea <span className="font-medium text-green-600">verde sólida</span> muestra la ruta recorrida desde el origen hasta tu ubicación actual.
+              <br />
+              La línea <span className="font-medium text-blue-600">azul punteada</span> muestra la ruta planificada completa (origen → destino).
             </p>
           )}
           {statusNumber !== 2 && (
             <p className="text-xs text-muted-foreground mt-2">
               🟢 Verde: Origen | 🟠 Naranja: Destino
               <br />
-              La línea azul muestra la ruta completa planificada.
+              La línea <span className="font-medium text-blue-600">azul punteada</span> muestra la ruta completa planificada.
             </p>
           )}
         </Card>

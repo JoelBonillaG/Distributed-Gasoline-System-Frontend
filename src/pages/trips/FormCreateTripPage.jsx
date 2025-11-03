@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/shadcn/button";
@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/shadcn/separator";
 import { Loader2, Plus, Truck, MapPin, Route, User, Users, Car, ChevronDown, Navigation } from "lucide-react";
 import { toast } from "sonner";
 import MapRoutePicker from "@/components/routes/MapRoutePicker";
-import { useAddRoute } from "@/hooks/use-routes";
+import { useAddRoute, useRoute } from "@/hooks/use-routes";
 import { useAddTrip, useAssignableDrivers, useAssignableVehicles, useAssignableSupervisors } from "@/hooks/use-trips";
 import { useAllRoutes } from "@/hooks/use-routes";
 import { parseFieldErrors, getErrorDetail } from "@/services/trips.service";
@@ -37,17 +37,7 @@ export default function FormCreateTripPage() {
   const [createdRouteId, setCreatedRouteId] = useState(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
-  // Hooks para datos asignables
-  const { data: assignableDrivers = [], isLoading: isLoadingDrivers } = useAssignableDrivers();
-  const { data: assignableVehicles = [], isLoading: isLoadingVehicles } = useAssignableVehicles();
-  const { data: assignableSupervisors = [], isLoading: isLoadingSupervisors } = useAssignableSupervisors();
-  const { data: routes = [], isLoading: isLoadingRoutes } = useAllRoutes();
-
-  // Hooks para mutaciones
-  const addRouteMut = useAddRoute();
-  const addTripMut = useAddTrip();
-
-  // Formulario de ruta
+  // Formulario de ruta (declarado antes de usarlo)
   const routeForm = useForm({
     mode: "onChange",
     defaultValues: {
@@ -63,7 +53,7 @@ export default function FormCreateTripPage() {
     },
   });
 
-  // Formulario de viaje
+  // Formulario de viaje (declarado antes de usarlo)
   const tripForm = useForm({
     mode: "onChange",
     defaultValues: {
@@ -73,6 +63,53 @@ export default function FormCreateTripPage() {
       vehicleId: "",
     },
   });
+
+  // Hooks para datos asignables
+  const { data: assignableDrivers = [], isLoading: isLoadingDrivers } = useAssignableDrivers();
+  const { data: assignableSupervisors = [], isLoading: isLoadingSupervisors } = useAssignableSupervisors();
+  const { data: routes = [], isLoading: isLoadingRoutes } = useAllRoutes();
+
+  // Obtener valores seleccionados del formulario
+  const selectedDriverId = tripForm.watch("driverId");
+  const selectedRouteId = tripForm.watch("routeId");
+
+  // Obtener datos del conductor seleccionado
+  const selectedDriver = assignableDrivers.find(
+    (d) => d.id?.toString() === selectedDriverId || d.id === selectedDriverId
+  );
+
+  // Obtener datos completos de la ruta seleccionada usando getOne (más confiable que la lista)
+  const { data: selectedRouteData, isLoading: isLoadingRouteData } = useRoute(selectedRouteId);
+
+  // Preparar filtros para vehículos
+  const vehicleFilters = useMemo(() => {
+    const filters = {};
+    
+    // Obtener licencias del conductor seleccionado
+    if (selectedDriver) {
+      const licenseCodes = selectedDriver.licenseTypeCodes || selectedDriver.license_type_codes || [];
+      if (licenseCodes.length > 0) {
+        filters.driverLicenseTypeCodes = licenseCodes;
+      }
+    }
+    
+    // Obtener tipo de vehículo de la ruta seleccionada (desde getOne)
+    if (selectedRouteData) {
+      const vehicleType = selectedRouteData.vehicleType || selectedRouteData.vehicle_type;
+      if (vehicleType) {
+        filters.routeVehicleType = vehicleType;
+      }
+    }
+    
+    return filters;
+  }, [selectedDriver, selectedRouteData]);
+
+  // Hook para vehículos con filtros (solo se ejecuta cuando hay conductor y ruta)
+  const { data: assignableVehicles = [], isLoading: isLoadingVehicles } = useAssignableVehicles(vehicleFilters);
+
+  // Hooks para mutaciones
+  const addRouteMut = useAddRoute();
+  const addTripMut = useAddTrip();
 
   // Obtener ubicación actual
   const handleGetCurrentLocation = () => {
@@ -253,9 +290,17 @@ export default function FormCreateTripPage() {
   };
 
   // Filtrar opciones asignables (soporta camelCase y snake_case)
-  const availableDrivers = (assignableDrivers || []).filter((d) => d.isAssignable || d.is_assignable);
-  const availableVehicles = (assignableVehicles || []).filter((v) => v.isAssignable || v.is_assignable);
-  const availableSupervisors = (assignableSupervisors || []).filter((s) => s.isAssignable || s.is_assignable);
+  // Mostrar todos los conductores pero con indicador de disponibilidad
+  const availableDrivers = assignableDrivers || [];
+  // Mostrar todos los vehículos pero con indicador de disponibilidad
+  const availableVehicles = assignableVehicles || [];
+  // Mostrar todos los supervisores pero con indicador de disponibilidad
+  const availableSupervisors = assignableSupervisors || [];
+
+  // Limpiar vehículo seleccionado cuando cambian conductor o ruta
+  React.useEffect(() => {
+    tripForm.setValue("vehicleId", "");
+  }, [selectedDriverId, selectedRouteId, tripForm]);
 
   // Sincronizar errores del servidor con react-hook-form
   React.useEffect(() => {
@@ -568,10 +613,19 @@ export default function FormCreateTripPage() {
                       const firstName = supervisor.firstName || supervisor.first_name || '';
                       const lastName = supervisor.lastName || supervisor.last_name || '';
                       const activeTripsCount = supervisor.activeTripsCount ?? supervisor.active_trips_count ?? 0;
+                      const isAssignable = supervisor.isAssignable || supervisor.is_assignable;
                       return (
-                        <SelectItem key={supervisor.id} value={supervisor.id.toString()}>
+                        <SelectItem 
+                          key={supervisor.id} 
+                          value={supervisor.id.toString()}
+                          disabled={!isAssignable}
+                          className={!isAssignable ? "opacity-50 cursor-not-allowed" : ""}
+                        >
                           {firstName} {lastName}
-                          {activeTripsCount !== undefined && activeTripsCount > 0 && (
+                          {!isAssignable && (
+                            <span className="text-xs text-destructive ml-2">(No disponible)</span>
+                          )}
+                          {isAssignable && activeTripsCount !== undefined && activeTripsCount > 0 && (
                             <span className="text-xs text-muted-foreground ml-2">
                               ({activeTripsCount} viajes activos)
                             </span>
@@ -617,7 +671,12 @@ export default function FormCreateTripPage() {
                       const lastName = driver.lastName || driver.last_name || '';
                       const isAssignable = driver.isAssignable || driver.is_assignable;
                       return (
-                        <SelectItem key={driver.id} value={driver.id.toString()}>
+                        <SelectItem 
+                          key={driver.id} 
+                          value={driver.id.toString()}
+                          disabled={!isAssignable}
+                          className={!isAssignable ? "opacity-50 cursor-not-allowed" : ""}
+                        >
                           {firstName} {lastName}
                           {!isAssignable && (
                             <span className="text-xs text-destructive ml-2">(No disponible)</span>
@@ -648,40 +707,69 @@ export default function FormCreateTripPage() {
               control={tripForm.control}
               name="vehicleId"
               rules={{ required: "El vehículo es obligatorio" }}
-              render={({ field }) => (
-                <Select
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  disabled={isLoadingVehicles}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={isLoadingVehicles ? "Cargando..." : "Selecciona un vehículo"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableVehicles.map((vehicle) => {
-                      const plate = vehicle.plate || '';
-                      const isAssignable = vehicle.isAssignable || vehicle.is_assignable;
-                      return (
-                        <SelectItem key={vehicle.id} value={vehicle.id.toString()}>
-                          {plate}
-                          {!isAssignable && (
-                            <span className="text-xs text-destructive ml-2">(No disponible)</span>
-                          )}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              )}
+              render={({ field }) => {
+                // Solo se pueden cargar vehículos si hay conductor, ruta seleccionada Y los datos de la ruta están cargados
+                const canLoadVehicles = selectedDriverId && selectedRouteId && selectedRouteData && !isLoadingRouteData;
+                return (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={isLoadingVehicles || isLoadingRouteData || !canLoadVehicles}
+                  >
+                    <SelectTrigger className={!canLoadVehicles || isLoadingRouteData ? "opacity-50" : ""}>
+                      <SelectValue 
+                        placeholder={
+                          !selectedDriverId || !selectedRouteId
+                            ? "Selecciona primero conductor y ruta" 
+                            : isLoadingRouteData
+                            ? "Cargando datos de ruta..."
+                            : isLoadingVehicles 
+                            ? "Cargando vehículos..." 
+                            : "Selecciona un vehículo"
+                        } 
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableVehicles.map((vehicle) => {
+                        const plate = vehicle.plate || '';
+                        const isAssignable = vehicle.isAssignable || vehicle.is_assignable;
+                        return (
+                          <SelectItem 
+                            key={vehicle.id} 
+                            value={vehicle.id.toString()}
+                            disabled={!isAssignable}
+                            className={!isAssignable ? "opacity-50 cursor-not-allowed" : ""}
+                          >
+                            {plate}
+                            {!isAssignable && (
+                              <span className="text-xs text-destructive ml-2">(No disponible)</span>
+                            )}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                );
+              }}
             />
             {tripForm.formState.errors.vehicleId && (
               <p className="text-sm text-destructive mt-1">
                 {tripForm.formState.errors.vehicleId.message}
               </p>
             )}
-            {availableVehicles.length === 0 && !isLoadingVehicles && (
+            {!selectedDriverId && (
               <p className="text-xs text-muted-foreground mt-1">
-                No hay vehículos disponibles
+                Primero selecciona un conductor
+              </p>
+            )}
+            {selectedDriverId && !selectedRouteId && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Luego selecciona una ruta para cargar vehículos compatibles
+              </p>
+            )}
+            {selectedDriverId && selectedRouteId && availableVehicles.length === 0 && !isLoadingVehicles && (
+              <p className="text-xs text-muted-foreground mt-1">
+                No hay vehículos disponibles con las licencias del conductor y tipo de ruta seleccionados
               </p>
             )}
           </div>

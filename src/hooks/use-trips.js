@@ -167,14 +167,21 @@ export const useAssignableDrivers = () =>
 
 /**
  * Hook para obtener vehículos asignables
+ * @param {Object} filters - Filtros opcionales
+ * @param {string[]} filters.driverLicenseTypeCodes - Códigos de licencia del conductor
+ * @param {string} filters.routeVehicleType - Tipo de vehículo de la ruta
  * @returns {Object} Query result con data, isLoading, error, etc.
  */
-export const useAssignableVehicles = () =>
-  useQuery({
-    queryKey: ["assignable-vehicles"],
-    queryFn: getAssignableVehicles,
+export const useAssignableVehicles = (filters = {}) => {
+  const hasFilters = !!(filters.driverLicenseTypeCodes?.length || filters.routeVehicleType);
+  
+  return useQuery({
+    queryKey: ["assignable-vehicles", filters.driverLicenseTypeCodes, filters.routeVehicleType],
+    queryFn: () => getAssignableVehicles(filters),
     staleTime: 10 * 60 * 1000, // 10 minutos
+    enabled: hasFilters, // Solo ejecutar cuando hay filtros (conductor y ruta seleccionados)
   });
+};
 
 /**
  * Hook para obtener supervisores asignables

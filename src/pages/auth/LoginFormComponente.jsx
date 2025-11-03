@@ -44,7 +44,7 @@ function LoginFormComponent() {
           id: "login-success",
           description: "Bienvenido de nuevo",
         });
-        navigate("/", { replace: true });
+        navigate("/trips", { replace: true });
         return;
       }
 

@@ -68,6 +68,36 @@ const routeColors = [
   "#f97316", // naranja
 ];
 
+// Helper para formatear fecha/timestamp
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return "N/A";
+  try {
+    // Manejar tanto objetos timestamp como strings
+    if (typeof timestamp === "object" && timestamp.seconds) {
+      const date = new Date(
+        timestamp.seconds * 1000 + (timestamp.nanos || 0) / 1e6
+      );
+      return date.toLocaleString("es-ES", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+    const date = new Date(timestamp);
+    return date.toLocaleString("es-ES", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "N/A";
+  }
+};
+
 // Componente para manejar el routing de Leaflet
 function LeafletRouting({ route, routeIndex }) {
   const map = useMap();
@@ -403,66 +433,101 @@ const VehicleRoutesPage = () => {
                             {route.trips.map((trip, tripIndex) => (
                               <div
                                 key={trip.id || tripIndex}
-                                className="flex items-center gap-4 p-3 bg-background rounded-lg border"
+                                className="p-3 bg-background rounded-lg border space-y-3"
                               >
-                                <div className="flex-1">
-                                  <div className="text-sm font-medium">
-                                    Viaje #{trip.id || tripIndex + 1}
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium">
+                                      Viaje #{trip.id || tripIndex + 1}
+                                    </div>
+                                    {(trip.driverFirstName ||
+                                      trip.driverLastName) && (
+                                      <div className="text-xs text-muted-foreground mt-1">
+                                        Conductor: {trip.driverFirstName || ""}{" "}
+                                        {trip.driverLastName || ""}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex gap-6 text-sm">
+                                    <div>
+                                      <div className="text-muted-foreground text-xs">
+                                        Estimado
+                                      </div>
+                                      <div className="font-medium">
+                                        {trip.fuelEstimated?.toLocaleString(
+                                          "es-ES",
+                                          {
+                                            maximumFractionDigits: 2,
+                                          }
+                                        ) || "0.00"}{" "}
+                                        L
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className="text-muted-foreground text-xs">
+                                        Real
+                                      </div>
+                                      <div className="font-medium">
+                                        {trip.fuelActual?.toLocaleString(
+                                          "es-ES",
+                                          {
+                                            maximumFractionDigits: 2,
+                                          }
+                                        ) || "—"}
+                                        {trip.fuelActual !== undefined &&
+                                          trip.fuelActual !== null &&
+                                          " L"}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className="text-muted-foreground text-xs">
+                                        Diferencia
+                                      </div>
+                                      <div
+                                        className={`font-medium ${
+                                          (trip.difference ?? 0) >= 0
+                                            ? "text-destructive"
+                                            : "text-green-600"
+                                        }`}
+                                      >
+                                        {(trip.difference ?? 0) >= 0 ? "+" : ""}
+                                        {(trip.difference ?? 0).toLocaleString(
+                                          "es-ES",
+                                          {
+                                            maximumFractionDigits: 2,
+                                          }
+                                        )}{" "}
+                                        L
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="flex gap-6 text-sm">
-                                  <div>
-                                    <div className="text-muted-foreground text-xs">
-                                      Estimado
-                                    </div>
-                                    <div className="font-medium">
-                                      {trip.fuelEstimated?.toLocaleString(
-                                        "es-ES",
-                                        {
-                                          maximumFractionDigits: 2,
-                                        }
-                                      ) || "0.00"}{" "}
-                                      L
-                                    </div>
+
+                                {/* Información adicional del viaje */}
+                                {(trip.startTime || trip.endTime) && (
+                                  <div className="flex gap-6 text-xs border-t pt-2">
+                                    {trip.startTime && (
+                                      <div>
+                                        <div className="text-muted-foreground">
+                                          Inicio
+                                        </div>
+                                        <div className="font-medium">
+                                          {formatTimestamp(trip.startTime)}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {trip.endTime && (
+                                      <div>
+                                        <div className="text-muted-foreground">
+                                          Fin
+                                        </div>
+                                        <div className="font-medium">
+                                          {formatTimestamp(trip.endTime)}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                  <div>
-                                    <div className="text-muted-foreground text-xs">
-                                      Real
-                                    </div>
-                                    <div className="font-medium">
-                                      {trip.fuelActual?.toLocaleString(
-                                        "es-ES",
-                                        {
-                                          maximumFractionDigits: 2,
-                                        }
-                                      ) || "—"}
-                                      {trip.fuelActual !== undefined &&
-                                        trip.fuelActual !== null &&
-                                        " L"}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div className="text-muted-foreground text-xs">
-                                      Diferencia
-                                    </div>
-                                    <div
-                                      className={`font-medium ${
-                                        (trip.difference ?? 0) >= 0
-                                          ? "text-destructive"
-                                          : "text-green-600"
-                                      }`}
-                                    >
-                                      {(trip.difference ?? 0) >= 0 ? "+" : ""}
-                                      {(trip.difference ?? 0).toLocaleString(
-                                        "es-ES",
-                                        {
-                                          maximumFractionDigits: 2,
-                                        }
-                                      )}{" "}
-                                      L
-                                    </div>
-                                  </div>
-                                </div>
+                                )}
                               </div>
                             ))}
                           </div>

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageHeading } from "@/components/ui/typography/Heading";
 import { Button } from "@/components/ui/shadcn/button";
@@ -86,19 +87,33 @@ const formatDate = (timestamp) => {
 };
 
 // Componente para mostrar la ruta en el mapa
-function TripRouteMap({ routeData, currentLocation, statusNumber, trip }) {
+function TripRouteMap({ routeData, currentLocation, statusNumber, trip, isDriver, showDirections }) {
   const map = useMap();
   const routingControlsRef = React.useRef([]);
 
   React.useEffect(() => {
     if (!routeData?.originLat || !routeData?.destinationLat) return;
 
-    // Limpiar controles anteriores
+    // Limpiar controles anteriores de manera segura
     routingControlsRef.current.forEach(control => {
       try {
-        map.removeControl(control);
+        if (control && control.getContainer) {
+          const container = control.getContainer();
+          if (container && container.parentNode) {
+            container.parentNode.removeChild(container);
+          }
+        }
+        if (control && map.hasControl && map.hasControl(control)) {
+          map.removeControl(control);
+        } else if (control && map) {
+          try {
+            map.removeControl(control);
+          } catch (e) {
+            // Ignorar errores de control ya removido
+          }
+        }
       } catch (e) {
-        console.warn("Error removing routing control:", e);
+        // Ignorar errores al limpiar controles
       }
     });
     routingControlsRef.current = [];
@@ -111,7 +126,10 @@ function TripRouteMap({ routeData, currentLocation, statusNumber, trip }) {
 
     if (!window.L || !window.L.Routing || !window.L.Routing.control) return;
 
-    // Siempre mostrar la ruta planificada completa (origen → destino) en azul
+    // Determinar si mostrar el panel de direcciones (solo para conductores en ruta)
+    const shouldShowDirections = showDirections === true;
+
+    // SIEMPRE crear la ruta planificada en el mapa (para todos los usuarios)
     const plannedRouteControl = window.L.Routing.control({
       waypoints: [
         window.L.latLng(originLat, originLng),
@@ -127,11 +145,17 @@ function TripRouteMap({ routeData, currentLocation, statusNumber, trip }) {
       routeWhileDragging: false,
       draggableWaypoints: false,
       createMarker: () => null,
-      show: false,
+      show: shouldShowDirections, // Mostrar panel solo para conductores en ruta (usando el panel por defecto de Leaflet)
     }).addTo(map);
 
-    const plannedPanel = plannedRouteControl.getContainer();
-    if (plannedPanel) plannedPanel.style.display = 'none';
+    // Ocultar el panel si no se debe mostrar (para otros usuarios)
+    if (!shouldShowDirections) {
+      const plannedPanel = plannedRouteControl.getContainer();
+      if (plannedPanel) {
+        plannedPanel.style.display = 'none';
+      }
+    }
+
     routingControlsRef.current.push(plannedRouteControl);
 
     // Si está en ruta y hay ubicación actual, también mostrar la ruta recorrida (origen → ubicación actual) en verde
@@ -151,7 +175,7 @@ function TripRouteMap({ routeData, currentLocation, statusNumber, trip }) {
         routeWhileDragging: false,
         draggableWaypoints: false,
         createMarker: () => null,
-        show: false,
+        show: false, // La ruta recorrida no muestra panel
       }).addTo(map);
 
       const traveledPanel = traveledRouteControl.getContainer();
@@ -159,7 +183,7 @@ function TripRouteMap({ routeData, currentLocation, statusNumber, trip }) {
       routingControlsRef.current.push(traveledRouteControl);
     }
 
-    // Ajustar zoom para mostrar toda la ruta y ubicaciones relevantes
+    // Ajustar zoom solo la primera vez, no cuando cambia la visibilidad del panel
     const bounds = window.L.latLngBounds([
       [originLat, originLng],
       [destLat, destLng],
@@ -181,14 +205,24 @@ function TripRouteMap({ routeData, currentLocation, statusNumber, trip }) {
     return () => {
       routingControlsRef.current.forEach(control => {
         try {
-          map.removeControl(control);
+          if (control && map && map.hasControl && map.hasControl(control)) {
+            map.removeControl(control);
+          } else if (control && map) {
+            try {
+              map.removeControl(control);
+            } catch (e) {
+              // Ignorar errores de control ya removido
+            }
+          }
         } catch (e) {
-          console.warn("Error removing routing control on cleanup:", e);
+          // Ignorar errores en cleanup
         }
       });
       routingControlsRef.current = [];
     };
-  }, [map, routeData, currentLocation, statusNumber, trip]);
+    // Solo ejecutar cuando cambian estos valores
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, routeData?.originLat, routeData?.destinationLat, currentLocation?.lat, currentLocation?.lng, statusNumber, trip?.originLat, trip?.destinationLat, isDriver, showDirections]);
 
   return null;
 }
@@ -214,6 +248,7 @@ export default function TripDetailPage() {
   const [updateLocationOpen, setUpdateLocationOpen] = useState(false);
   const [finishTripOpen, setFinishTripOpen] = useState(false);
   const [reviewTripOpen, setReviewTripOpen] = useState(false);
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(false);
 
   // Obtener roles del usuario
   const userRoles = Array.isArray(user?.roles)
@@ -224,9 +259,19 @@ export default function TripDetailPage() {
   const isDriver = userRoles.includes("DRIVER");
   const isSupervisor = userRoles.includes("SUPERVISOR");
 
-  // Normalizar status
-  const statusNumber = trip ? normalizeStatus(trip.status) : 1;
+  // Normalizar status - asegurarse de que funcione con string o número
+  const tripStatusRaw = trip?.status;
+  const statusNumber = trip ? normalizeStatus(tripStatusRaw) : 1;
   const statusConfig = STATUS_CONFIG[statusNumber] || STATUS_CONFIG[1];
+  
+  // Debug extensivo
+  console.log("=== TRIP DETAIL DEBUG ===");
+  console.log("Trip status raw:", tripStatusRaw);
+  console.log("Status normalized:", statusNumber);
+  console.log("User roles:", userRoles);
+  console.log("isDriver:", isDriver);
+  console.log("isSupervisor:", isSupervisor);
+  console.log("isAdmin:", isAdmin);
 
   // Determinar qué acciones están disponibles
   const canStartTrip = isDriver && statusNumber === 1; // CREADO
@@ -239,13 +284,26 @@ export default function TripDetailPage() {
     refetch();
   };
 
+  // Mostrar loading overlay con delay mínimo de 3 segundos (igual que FormRoutePage)
+  useEffect(() => {
+    if (id) {
+      // Mostrar overlay cuando empieza a cargar
+      setShowLoadingOverlay(true);
+      
+      // Ocultar después de 3 segundos (igual que FormRoutePage)
+      const timer = setTimeout(() => {
+        setShowLoadingOverlay(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    } else {
+      setShowLoadingOverlay(false);
+    }
+  }, [id]);
+
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 className="size-12 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Cargando viaje...</p>
-      </div>
-    );
+    // Mantener el overlay visible mientras carga, no retornar early
+    return null;
   }
 
   if (error || !trip) {
@@ -280,8 +338,31 @@ export default function TripDetailPage() {
     : `Supervisor #${trip.supervisorId}`;
   const vehiclePlate = trip.vehiclePlate || trip.vehicleInfo?.plate || `Vehículo #${trip.vehicleId}`;
 
+  // Determinar si mostrar direcciones (solo para conductores en ruta)
+  // Validar tanto el statusNumber normalizado como el string directo por si acaso
+  const tripStatus = trip?.status;
+  const isInRoute = statusNumber === 2 || tripStatus === "EN_RUTA" || tripStatus === 2;
+  const shouldShowDirections = isDriver && isInRoute;
+  
+  console.log("isInRoute:", isInRoute);
+  console.log("shouldShowDirections:", shouldShowDirections);
+  console.log("routeData:", routeData);
+  console.log("trip:", trip);
+  console.log("=========================");
+
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 relative">
+      {/* Modal de carga - mismo estilo que FormRoutePage */}
+      {showLoadingOverlay && id && createPortal(
+        <div className="fixed inset-0 z-[99999] bg-background flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="size-12 animate-spin text-primary" />
+            <p className="text-lg font-medium text-foreground">Cargando viaje...</p>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <PageHeading
@@ -529,46 +610,52 @@ export default function TripDetailPage() {
       {/* Mapa de la ruta (solo si tenemos datos de la ruta) */}
       {routeData && (
         <Card className="p-6">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <RouteIcon className="size-5" />
-            Mapa de la ruta
-          </h3>
-          <div className="rounded-xl border overflow-hidden h-[500px] bg-muted/20">
-            <MapContainer
-              center={
-                (() => {
-                  const originLat = trip?.originLat ?? routeData?.originLat;
-                  const originLng = trip?.originLng ?? routeData?.originLng;
-                  const destLat = trip?.destinationLat ?? routeData?.destinationLat;
-                  const destLng = trip?.destinationLng ?? routeData?.destinationLng;
-                  
-                  if (originLat && destLat) {
-                    return [(originLat + destLat) / 2, (originLng + destLng) / 2];
-                  } else if (originLat) {
-                    return [originLat, originLng];
-                  }
-                  return [-1.8312, -78.1834];
-                })()
-              }
-              zoom={8}
-              style={{ height: "100%", width: "100%" }}
-              zoomControl={true}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='© OpenStreetMap'
-              />
-              
-              <TripRouteMap
-                routeData={routeData}
-                currentLocation={
-                  statusNumber === 2 && trip.currentLat && trip.currentLng
-                    ? { lat: trip.currentLat, lng: trip.currentLng }
-                    : null
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold flex items-center gap-2">
+              <RouteIcon className="size-5" />
+              Mapa de la ruta
+            </h3>
+          </div>
+          <div className={`rounded-xl border overflow-hidden ${shouldShowDirections ? 'h-[600px]' : 'h-[500px]'} bg-muted/20 relative`}>
+            {/* Contenedor del mapa - siempre ocupa todo el espacio */}
+            <div className="absolute inset-0 w-full h-full">
+              <MapContainer
+                center={
+                  (() => {
+                    const originLat = trip?.originLat ?? routeData?.originLat;
+                    const originLng = trip?.originLng ?? routeData?.originLng;
+                    const destLat = trip?.destinationLat ?? routeData?.destinationLat;
+                    const destLng = trip?.destinationLng ?? routeData?.destinationLng;
+                    
+                    if (originLat && destLat) {
+                      return [(originLat + destLat) / 2, (originLng + destLng) / 2];
+                    } else if (originLat) {
+                      return [originLat, originLng];
+                    }
+                    return [-1.8312, -78.1834];
+                  })()
                 }
-                statusNumber={statusNumber}
-                trip={trip}
-              />
+                zoom={8}
+                style={{ height: "100%", width: "100%" }}
+                zoomControl={true}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='© OpenStreetMap'
+                />
+                
+                <TripRouteMap
+                  routeData={routeData}
+                  currentLocation={
+                    statusNumber === 2 && trip.currentLat && trip.currentLng
+                      ? { lat: trip.currentLat, lng: trip.currentLng }
+                      : null
+                  }
+                  statusNumber={statusNumber}
+                  trip={trip}
+                  isDriver={isDriver}
+                  showDirections={shouldShowDirections}
+                />
 
               {/* Marcador de origen */}
               {(trip?.originLat ?? routeData?.originLat) && (trip?.originLng ?? routeData?.originLng) && (
@@ -619,24 +706,28 @@ export default function TripDetailPage() {
                   <Popup>Destino: {destinationName}</Popup>
                 </Marker>
               )}
-            </MapContainer>
+              </MapContainer>
+            </div>
+
           </div>
-          {statusNumber === 2 && trip.currentLat && trip.currentLng && (
-            <p className="text-xs text-muted-foreground mt-2">
-              🟢 Verde: Origen | 🔵 Azul: Ubicación actual | 🟠 Naranja: Destino
-              <br />
-              La línea <span className="font-medium text-green-600">verde sólida</span> muestra la ruta recorrida desde el origen hasta tu ubicación actual.
-              <br />
-              La línea <span className="font-medium text-blue-600">azul punteada</span> muestra la ruta planificada completa (origen → destino).
-            </p>
-          )}
-          {statusNumber !== 2 && (
-            <p className="text-xs text-muted-foreground mt-2">
-              🟢 Verde: Origen | 🟠 Naranja: Destino
-              <br />
-              La línea <span className="font-medium text-blue-600">azul punteada</span> muestra la ruta completa planificada.
-            </p>
-          )}
+          <div className="w-full px-4 pt-4">
+            {statusNumber === 2 && trip.currentLat && trip.currentLng && (
+              <p className="text-xs text-muted-foreground">
+                🟢 Verde: Origen | 🔵 Azul: Ubicación actual | 🟠 Naranja: Destino
+                <br />
+                La línea <span className="font-medium text-green-600">verde sólida</span> muestra la ruta recorrida desde el origen hasta tu ubicación actual.
+                <br />
+                La línea <span className="font-medium text-blue-600">azul punteada</span> muestra la ruta planificada completa (origen → destino).
+              </p>
+            )}
+            {statusNumber !== 2 && (
+              <p className="text-xs text-muted-foreground">
+                🟢 Verde: Origen | 🟠 Naranja: Destino
+                <br />
+                La línea <span className="font-medium text-blue-600">azul punteada</span> muestra la ruta completa planificada.
+              </p>
+            )}
+          </div>
         </Card>
       )}
 

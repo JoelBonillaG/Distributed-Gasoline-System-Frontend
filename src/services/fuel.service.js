@@ -75,6 +75,72 @@ const fuelService = {
       throw error;
     }
   },
+
+  /**
+   * Obtener KPIs del sistema
+   * @param {string} statusFilter - Filtro opcional de estado (CREADO, EN_RUTA, EN_REVISION, TERMINADO)
+   * @returns {Promise<Object>} Datos de KPIs
+   * Formato: { totalTrips: number, averageEfficiency: number }
+   */
+  async getKPIs(statusFilter) {
+    try {
+      const params = {};
+
+      // Agregar statusFilter solo si está definido
+      if (statusFilter !== undefined && statusFilter !== null) {
+        params.statusFilter = statusFilter;
+      }
+
+      const response = await api.get("/fuel/kpis", {
+        params,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener KPIs:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtener reporte de ranking de choferes
+   * @param {string} statusFilter - Filtro opcional de estado (CREADO, EN_RUTA, EN_REVISION, TERMINADO)
+   * @returns {Promise<Object>} Datos del reporte de choferes
+   * Formato: { drivers: [{ driverId, driverFirstName, driverLastName, totalTrips, tripsCreados, tripsEnRuta, tripsEnRevision, tripsTerminados }] }
+   */
+  async getDriverRankingReport(statusFilter) {
+    try {
+      const params = {};
+
+      // Agregar statusFilter solo si está definido
+      if (statusFilter !== undefined && statusFilter !== null) {
+        params.statusFilter = statusFilter;
+      }
+
+      const response = await api.get("/fuel/reports/driver-ranking", {
+        params,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener reporte de ranking de choferes:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtener viajes de un chofer específico
+   * @param {number} driverId - ID del chofer
+   * @returns {Promise<Object>} Datos de los viajes del chofer
+   * Formato: { trips: [{ tripId, vehicle, route, status, startTime, endTime, fuelEstimated, fuelActual }] }
+   */
+  async getDriverTrips(driverId) {
+    try {
+      const response = await api.get(`/fuel/drivers/${driverId}/trips`);
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener viajes del chofer:", error);
+      throw error;
+    }
+  },
 };
 
 export default fuelService;

@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, Route, TrendingUp, Loader2, Users } from "lucide-react";
+import {
+  BarChart3,
+  Route,
+  TrendingUp,
+  Loader2,
+  Users,
+  Medal,
+  FileText,
+  Navigation,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
 import { PageHeading } from "@/components/ui/typography/Heading";
 import {
   Card,
@@ -16,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/shadcn/table";
+import { Badge } from "@/components/ui/shadcn/badge";
 import FuelConsumptionChart from "@/components/fuel/FuelConsumptionChart";
 import fuelService from "@/services/fuel.service";
 import { toast } from "sonner";
@@ -157,56 +169,144 @@ export default function Dashboard() {
               <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
+                    <TableRow className="bg-gradient-to-r from-muted/80 to-muted/40 border-b">
+                      <TableHead className="font-semibold w-12">#</TableHead>
                       <TableHead className="font-semibold">Chofer</TableHead>
                       <TableHead className="font-semibold text-center">
-                        Total Viajes
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Route className="h-4 w-4 text-primary" />
+                          Total
+                        </div>
                       </TableHead>
                       <TableHead className="font-semibold text-center">
-                        Creados
+                        <div className="flex items-center justify-center gap-1.5">
+                          <FileText className="h-4 w-4 text-gray-500" />
+                          Creados
+                        </div>
                       </TableHead>
                       <TableHead className="font-semibold text-center">
-                        En Ruta
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Navigation className="h-4 w-4 text-blue-500" />
+                          En Ruta
+                        </div>
                       </TableHead>
                       <TableHead className="font-semibold text-center">
-                        En Revisión
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Clock className="h-4 w-4 text-yellow-500" />
+                          En Revisión
+                        </div>
                       </TableHead>
                       <TableHead className="font-semibold text-center">
-                        Terminados
+                        <div className="flex items-center justify-center gap-1.5">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          Terminados
+                        </div>
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {drivers.map((driver) => (
-                      <TableRow
-                        key={driver.driverId}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() =>
-                          navigate(
-                            `/dashboard/drivers/${driver.driverId}/trips`
-                          )
+                    {drivers.map((driver, index) => {
+                      const getRankIcon = (index) => {
+                        if (index === 0) {
+                          return <Medal className="h-4 w-4 text-yellow-500" />;
+                        } else if (index === 1) {
+                          return <Medal className="h-4 w-4 text-gray-400" />;
+                        } else if (index === 2) {
+                          return <Medal className="h-4 w-4 text-orange-400" />;
                         }
-                      >
-                        <TableCell className="font-medium">
-                          {driver.driverFirstName} {driver.driverLastName}
-                        </TableCell>
-                        <TableCell className="text-center font-semibold">
-                          {driver.totalTrips}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {driver.tripsCreados}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {driver.tripsEnRuta}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {driver.tripsEnRevision}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {driver.tripsTerminados}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                        return null;
+                      };
+
+                      return (
+                        <TableRow
+                          key={driver.driverId}
+                          className="cursor-pointer hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent transition-all border-b group"
+                          onClick={() =>
+                            navigate(
+                              `/dashboard/drivers/${driver.driverId}/trips`
+                            )
+                          }
+                        >
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {getRankIcon(index)}
+                              <span className="text-muted-foreground text-sm font-semibold">
+                                {index + 1}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-semibold text-base">
+                              {driver.driverFirstName} {driver.driverLastName}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge
+                              variant="default"
+                              className="bg-primary text-primary-foreground font-bold text-sm px-3 py-1"
+                            >
+                              {driver.totalTrips}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {driver.tripsCreados > 0 ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-gray-50 text-gray-700 border-gray-300 font-medium"
+                              >
+                                {driver.tripsCreados}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                {driver.tripsCreados}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {driver.tripsEnRuta > 0 ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-blue-50 text-blue-700 border-blue-300 font-medium"
+                              >
+                                {driver.tripsEnRuta}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                {driver.tripsEnRuta}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {driver.tripsEnRevision > 0 ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-yellow-50 text-yellow-700 border-yellow-300 font-medium"
+                              >
+                                {driver.tripsEnRevision}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                {driver.tripsEnRevision}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {driver.tripsTerminados > 0 ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-green-50 text-green-700 border-green-300 font-medium"
+                              >
+                                {driver.tripsTerminados}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                {driver.tripsTerminados}
+                              </span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

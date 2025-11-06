@@ -88,9 +88,9 @@ const VehicleDetailsPage = () => {
   const columns = [
     {
       accessorKey: "vehicleId",
-      header: "ID Vehículo",
+      header: "Vehículo",
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.vehicleId}</span>
+        <span className="font-medium">{row.original.vehiclePlate}</span>
       ),
     },
     {

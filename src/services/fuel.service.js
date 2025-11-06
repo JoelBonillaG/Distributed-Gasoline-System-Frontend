@@ -141,6 +141,37 @@ const fuelService = {
       throw error;
     }
   },
+
+  /**
+   * Obtener resumen general de rutas
+   * @returns {Promise<Object>} Datos del resumen de rutas
+   * Formato: { routes: [{ routeId, routeName, totalTrips, estimated, actual, difference, efficiency }] }
+   */
+  async getRoutesSummaryReport() {
+    try {
+      const response = await api.get("/fuel/reports/routes-summary");
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener resumen de rutas:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtener viajes de una ruta específica
+   * @param {number} routeId - ID de la ruta
+   * @returns {Promise<Object>} Datos de los viajes de la ruta
+   * Formato: { trips: [{ tripId, driverFirstName, driverLastName, vehicle, status, startTime, endTime, estimated, actual, difference, efficiency }] }
+   */
+  async getRouteTrips(routeId) {
+    try {
+      const response = await api.get(`/fuel/routes/${routeId}/trips`);
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener viajes de la ruta:", error);
+      throw error;
+    }
+  },
 };
 
 export default fuelService;

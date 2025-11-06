@@ -11,6 +11,9 @@ import {
   Navigation,
   CheckCircle2,
   Clock,
+  MapPin,
+  Gauge,
+  Fuel,
 } from "lucide-react";
 import { PageHeading } from "@/components/ui/typography/Heading";
 import {
@@ -39,12 +42,15 @@ export default function Dashboard() {
     averageEfficiency: 0,
   });
   const [drivers, setDrivers] = useState([]);
+  const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [driversLoading, setDriversLoading] = useState(true);
+  const [routesLoading, setRoutesLoading] = useState(true);
 
   useEffect(() => {
     fetchKPIs();
     fetchDriverRanking();
+    fetchRoutesSummary();
   }, []);
 
   const fetchKPIs = async () => {
@@ -70,6 +76,19 @@ export default function Dashboard() {
       toast.error("Error al cargar el ranking de choferes");
     } finally {
       setDriversLoading(false);
+    }
+  };
+
+  const fetchRoutesSummary = async () => {
+    try {
+      setRoutesLoading(true);
+      const data = await fuelService.getRoutesSummaryReport();
+      setRoutes(data.routes || []);
+    } catch (error) {
+      console.error("Error al obtener resumen de rutas:", error);
+      toast.error("Error al cargar el resumen de rutas");
+    } finally {
+      setRoutesLoading(false);
     }
   };
 
@@ -301,6 +320,163 @@ export default function Dashboard() {
                             ) : (
                               <span className="text-muted-foreground text-sm">
                                 {driver.tripsTerminados}
+                              </span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tabla de resumen de rutas */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Resumen de Rutas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {routesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">
+                  Cargando datos...
+                </span>
+              </div>
+            ) : routes.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No hay datos de rutas disponibles
+              </div>
+            ) : (
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gradient-to-r from-muted/80 to-muted/40 border-b">
+                      <TableHead className="font-semibold">Ruta</TableHead>
+                      <TableHead className="font-semibold text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Route className="h-4 w-4 text-primary" />
+                          Viajes
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-semibold text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Fuel className="h-4 w-4 text-blue-500" />
+                          Estimado (L)
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-semibold text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Fuel className="h-4 w-4 text-green-500" />
+                          Real (L)
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-semibold text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <TrendingUp className="h-4 w-4 text-purple-500" />
+                          Diferencia (L)
+                        </div>
+                      </TableHead>
+                      <TableHead className="font-semibold text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Gauge className="h-4 w-4 text-orange-500" />
+                          Eficiencia (%)
+                        </div>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {routes.map((route) => {
+                      const hasActualFuel = route.actual > 0;
+
+                      return (
+                        <TableRow
+                          key={route.routeId}
+                          className="cursor-pointer hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent transition-all border-b group"
+                          onClick={() =>
+                            navigate(
+                              `/dashboard/routes/${route.routeId}/trips`
+                            )
+                          }
+                        >
+                          <TableCell>
+                            <div className="font-semibold text-base">
+                              {route.routeName}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge
+                              variant="default"
+                              className="bg-primary text-primary-foreground font-bold text-sm px-3 py-1"
+                            >
+                              {route.totalTrips}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <span className="text-sm font-medium text-blue-700">
+                              {route.estimated.toLocaleString("es-ES", {
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {hasActualFuel ? (
+                              <span className="text-sm font-medium text-green-700">
+                                {route.actual.toLocaleString("es-ES", {
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                N/A
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {hasActualFuel ? (
+                              <span
+                                className={`text-sm font-medium ${
+                                  route.difference >= 0
+                                    ? "text-destructive"
+                                    : "text-green-600"
+                                }`}
+                              >
+                                {route.difference >= 0 ? "+" : ""}
+                                {route.difference.toLocaleString("es-ES", {
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                N/A
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {hasActualFuel ? (
+                              <Badge
+                                variant="outline"
+                                className={`font-medium ${
+                                  route.efficiency >= 95
+                                    ? "bg-green-50 text-green-700 border-green-300"
+                                    : route.efficiency >= 85
+                                    ? "bg-yellow-50 text-yellow-700 border-yellow-300"
+                                    : "bg-red-50 text-red-700 border-red-300"
+                                }`}
+                              >
+                                {route.efficiency.toLocaleString("es-ES", {
+                                  maximumFractionDigits: 2,
+                                })}%
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                N/A
                               </span>
                             )}
                           </TableCell>

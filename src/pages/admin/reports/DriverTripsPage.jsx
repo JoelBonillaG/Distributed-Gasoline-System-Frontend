@@ -255,6 +255,25 @@ const DriverTripsPage = () => {
     return timeString;
   };
 
+  // Calcular estadísticas generales
+  const totalTrips = trips.length;
+  const totalEstimated = trips.reduce((sum, trip) => sum + (trip.fuelEstimated || 0), 0);
+  const totalActual = trips
+    .filter((trip) => trip.fuelActual > 0)
+    .reduce((sum, trip) => sum + (trip.fuelActual || 0), 0);
+  
+  // Calcular eficiencia promedio solo de los viajes con datos reales
+  const tripsWithEfficiency = trips.filter(
+    (trip) => trip.fuelActual > 0 && trip.fuelEstimated > 0
+  );
+  const averageEfficiency =
+    tripsWithEfficiency.length > 0
+      ? tripsWithEfficiency.reduce((sum, trip) => {
+          const efficiency = calculateEfficiency(trip.fuelEstimated, trip.fuelActual);
+          return sum + parseFloat(efficiency);
+        }, 0) / tripsWithEfficiency.length
+      : 0;
+
   return (
     <div className="space-y-6 p-6">
       <PageHeading
@@ -272,6 +291,87 @@ const DriverTripsPage = () => {
           <ArrowLeft className="h-4 w-4" />
           Volver al Dashboard
         </Button>
+      </div>
+
+      {/* Estadísticas generales */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1 flex-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Viajes
+                </p>
+                <p className="text-2xl font-bold">{totalTrips}</p>
+              </div>
+              <div className="p-2 rounded-full bg-blue-50 dark:bg-blue-950">
+                <Route className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1 flex-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Combustible Estimado
+                </p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {totalEstimated.toLocaleString("es-ES", {
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  L
+                </p>
+              </div>
+              <div className="p-2 rounded-full bg-blue-50 dark:bg-blue-950">
+                <Fuel className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1 flex-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Combustible Real
+                </p>
+                <p className="text-2xl font-bold text-green-600">
+                  {totalActual > 0
+                    ? `${totalActual.toLocaleString("es-ES", {
+                        maximumFractionDigits: 2,
+                      })} L`
+                    : "N/A"}
+                </p>
+              </div>
+              <div className="p-2 rounded-full bg-green-50 dark:bg-green-950">
+                <Fuel className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1 flex-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Eficiencia Promedio
+                </p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {averageEfficiency > 0
+                    ? `${averageEfficiency.toLocaleString("es-ES", {
+                        maximumFractionDigits: 2,
+                      })}%`
+                    : "N/A"}
+                </p>
+              </div>
+              <div className="p-2 rounded-full bg-purple-50 dark:bg-purple-950">
+                <Gauge className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card className="overflow-hidden">

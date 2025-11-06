@@ -42,6 +42,7 @@ import TripDetailPage from "./pages/trips/TripDetailPage";
 import VehicleDetailsPage from "./pages/admin/reports/VehicleDetailsPage";
 import VehicleRoutesPage from "./pages/admin/reports/VehicleRoutesPage";
 import DriverTripsPage from "./pages/admin/reports/DriverTripsPage";
+import RouteTripsPage from "./pages/admin/reports/RouteTripsPage";
 
 function RoleBasedHome() {
   const { user } = useAuth();
@@ -139,6 +140,10 @@ export default function App() {
                 <Route
                   path="/dashboard/drivers/:driverId/trips"
                   element={<DriverTripsPage />}
+                />
+                <Route
+                  path="/dashboard/routes/:routeId/trips"
+                  element={<RouteTripsPage />}
                 />
                 <Route path="/admin/users" element={<UsersPage />} />
                 <Route path="/drivers" element={<DriversPage />} />

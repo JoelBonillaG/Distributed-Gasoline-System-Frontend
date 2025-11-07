@@ -17,6 +17,8 @@ import {
   Fuel,
   CalendarIcon,
   FileDown,
+  Truck,
+  UserCircle,
 } from "lucide-react";
 import { PageHeading } from "@/components/ui/typography/Heading";
 import {
@@ -269,16 +271,28 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Generadores de Reporte PDF */}
+      {/* Sección de Reportes PDF */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileDown className="h-5 w-5" />
-            Generar Reportes PDF
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                <FileDown className="h-6 w-6 text-primary" />
+                Reportes en PDF
+              </CardTitle>
+              <p className="text-muted-foreground mt-1">
+                Genera reportes detallados de consumo de combustible
+              </p>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Selector de fechas compartido */}
+          <div className="space-y-4 pb-4 border-b">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+              <h3 className="text-lg font-semibold">Rango de Fechas</h3>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label
@@ -296,6 +310,7 @@ export default function Dashboard() {
                     onChange={(e) => {
                       setPdfStartDate(e.target.value);
                     }}
+                    className="w-full"
                   />
                   <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 </div>
@@ -317,68 +332,137 @@ export default function Dashboard() {
                     onChange={(e) => {
                       setPdfEndDate(e.target.value);
                     }}
+                    className="w-full"
                   />
                   <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button
-                onClick={handleGenerateMachineryPDF}
-                disabled={
-                  machineryReportLoading || !pdfStartDate || !pdfEndDate
-                }
-                className="w-full"
-                variant="default"
-              >
-                {machineryReportLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generando...
-                  </>
-                ) : (
-                  <>
-                    <FileDown className="mr-2 h-4 w-4" />
-                    Reporte por Tipo de Maquinaria
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={handleGenerateDriverPDF}
-                disabled={driverReportLoading || !pdfStartDate || !pdfEndDate}
-                className="w-full"
-                variant="default"
-              >
-                {driverReportLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generando...
-                  </>
-                ) : (
-                  <>
-                    <FileDown className="mr-2 h-4 w-4" />
-                    Reporte por Chofer
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={handleGenerateRoutePDF}
-                disabled={routeReportLoading || !pdfStartDate || !pdfEndDate}
-                className="w-full"
-                variant="default"
-              >
-                {routeReportLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generando...
-                  </>
-                ) : (
-                  <>
-                    <FileDown className="mr-2 h-4 w-4" />
-                    Reporte por Ruta
-                  </>
-                )}
-              </Button>
+          </div>
+
+          {/* Cards de reportes individuales */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Reporte de Maquinaria */}
+            <div className="border rounded-lg p-5 hover:border-primary/50 transition-colors">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                    <Truck className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      Tipo de Maquinaria
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Consumo por tipo de vehículo
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Analiza el consumo de combustible agrupado por tipo de
+                  maquinaria (Liviana, Pesada, etc.)
+                </p>
+                <Button
+                  onClick={handleGenerateMachineryPDF}
+                  disabled={
+                    machineryReportLoading || !pdfStartDate || !pdfEndDate
+                  }
+                  className="w-full"
+                  variant="default"
+                >
+                  {machineryReportLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Generar Reporte
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Reporte de Choferes */}
+            <div className="border rounded-lg p-5 hover:border-primary/50 transition-colors">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <UserCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      Consumo por Chofer
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Análisis por conductor
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Evalúa el rendimiento y consumo de combustible de cada chofer
+                  en el período seleccionado
+                </p>
+                <Button
+                  onClick={handleGenerateDriverPDF}
+                  disabled={driverReportLoading || !pdfStartDate || !pdfEndDate}
+                  className="w-full"
+                  variant="default"
+                >
+                  {driverReportLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Generar Reporte
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Reporte de Rutas */}
+            <div className="border rounded-lg p-5 hover:border-primary/50 transition-colors">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                    <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">Consumo por Ruta</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Análisis por ruta
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Revisa el consumo de combustible y eficiencia de cada ruta
+                  configurada en el sistema
+                </p>
+                <Button
+                  onClick={handleGenerateRoutePDF}
+                  disabled={routeReportLoading || !pdfStartDate || !pdfEndDate}
+                  className="w-full"
+                  variant="default"
+                >
+                  {routeReportLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Generar Reporte
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

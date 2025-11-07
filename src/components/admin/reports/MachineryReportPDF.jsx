@@ -125,10 +125,10 @@ export default function MachineryReportPDF({ reportData, startDate, endDate }) {
     ((reportData.totalActual || 0) - (reportData.totalEstimated || 0)) *
     pricePerLiter;
 
-  // Formatear fecha
+  // Formatear fecha en formato ISO 8601 (YYYY-MM-DD)
   const generatedDate = reportData.generatedAt
-    ? format(new Date(reportData.generatedAt), "dd/MM/yyyy", { locale: es })
-    : format(new Date(), "dd/MM/yyyy", { locale: es });
+    ? format(new Date(reportData.generatedAt), "yyyy-MM-dd", { locale: es })
+    : format(new Date(), "yyyy-MM-dd", { locale: es });
 
   const periodText = reportData.period || `${startDate} - ${endDate}`;
 

@@ -194,6 +194,50 @@ const fuelService = {
       throw error;
     }
   },
+
+  /**
+   * Obtener reporte de consumo por chofer
+   * @param {string} startDate - Fecha de inicio (formato YYYY-MM-DD)
+   * @param {string} endDate - Fecha de fin (formato YYYY-MM-DD)
+   * @returns {Promise<Object>} Datos del reporte por chofer
+   * Formato: { period, generatedAt, totalDrivers, totalTrips, totalEstimated, totalActual, globalEfficiency, drivers: [...] }
+   */
+  async generateDriverConsumptionReport(startDate, endDate) {
+    try {
+      const response = await api.get("/fuel/reports/driver-consumption", {
+        params: {
+          startDate,
+          endDate,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al generar reporte de consumo por chofer:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtener reporte de consumo por ruta
+   * @param {string} startDate - Fecha de inicio (formato YYYY-MM-DD)
+   * @param {string} endDate - Fecha de fin (formato YYYY-MM-DD)
+   * @returns {Promise<Object>} Datos del reporte por ruta
+   * Formato: { period, generatedAt, totalRoutes, totalTrips, totalEstimated, totalActual, globalEfficiency, routes: [...] }
+   */
+  async generateRouteConsumptionReport(startDate, endDate) {
+    try {
+      const response = await api.get("/fuel/reports/routes-consumption", {
+        params: {
+          startDate,
+          endDate,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al generar reporte de consumo por ruta:", error);
+      throw error;
+    }
+  },
 };
 
 export default fuelService;

@@ -41,6 +41,8 @@ import FuelConsumptionChart from "@/components/fuel/FuelConsumptionChart";
 import fuelService from "@/services/fuel.service";
 import { toast } from "sonner";
 import MachineryReportViewer from "@/components/admin/reports/MachineryReportViewer";
+import DriverConsumptionReportViewer from "@/components/admin/reports/DriverConsumptionReportViewer";
+import RouteConsumptionReportViewer from "@/components/admin/reports/RouteConsumptionReportViewer";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -70,7 +72,11 @@ export default function Dashboard() {
     return getLocalDateString(new Date());
   });
   const [machineryReport, setMachineryReport] = useState(null);
-  const [reportLoading, setReportLoading] = useState(false);
+  const [driverReport, setDriverReport] = useState(null);
+  const [routeReport, setRouteReport] = useState(null);
+  const [machineryReportLoading, setMachineryReportLoading] = useState(false);
+  const [driverReportLoading, setDriverReportLoading] = useState(false);
+  const [routeReportLoading, setRouteReportLoading] = useState(false);
 
   useEffect(() => {
     fetchKPIs();
@@ -117,20 +123,20 @@ export default function Dashboard() {
     }
   };
 
-  const handleGeneratePDF = async () => {
+  const handleGenerateMachineryPDF = async () => {
     if (!pdfStartDate || !pdfEndDate) {
       toast.error("Por favor selecciona un rango de fechas");
       return;
     }
 
-    setReportLoading(true);
+    setMachineryReportLoading(true);
     try {
       const data = await fuelService.generateMachineryTypeReport(
         pdfStartDate,
         pdfEndDate
       );
       setMachineryReport(data);
-      toast.success("Reporte generado exitosamente");
+      toast.success("Reporte de maquinaria generado exitosamente");
     } catch (error) {
       console.error("Error al generar el PDF:", error);
       const errorMessage =
@@ -139,7 +145,59 @@ export default function Dashboard() {
         "Error al generar el reporte PDF";
       toast.error(errorMessage);
     } finally {
-      setReportLoading(false);
+      setMachineryReportLoading(false);
+    }
+  };
+
+  const handleGenerateDriverPDF = async () => {
+    if (!pdfStartDate || !pdfEndDate) {
+      toast.error("Por favor selecciona un rango de fechas");
+      return;
+    }
+
+    setDriverReportLoading(true);
+    try {
+      const data = await fuelService.generateDriverConsumptionReport(
+        pdfStartDate,
+        pdfEndDate
+      );
+      setDriverReport(data);
+      toast.success("Reporte de choferes generado exitosamente");
+    } catch (error) {
+      console.error("Error al generar el PDF:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Error al generar el reporte PDF";
+      toast.error(errorMessage);
+    } finally {
+      setDriverReportLoading(false);
+    }
+  };
+
+  const handleGenerateRoutePDF = async () => {
+    if (!pdfStartDate || !pdfEndDate) {
+      toast.error("Por favor selecciona un rango de fechas");
+      return;
+    }
+
+    setRouteReportLoading(true);
+    try {
+      const data = await fuelService.generateRouteConsumptionReport(
+        pdfStartDate,
+        pdfEndDate
+      );
+      setRouteReport(data);
+      toast.success("Reporte de rutas generado exitosamente");
+    } catch (error) {
+      console.error("Error al generar el PDF:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Error al generar el reporte PDF";
+      toast.error(errorMessage);
+    } finally {
+      setRouteReportLoading(false);
     }
   };
 
@@ -211,12 +269,12 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Generador de Reporte PDF */}
+      {/* Generadores de Reporte PDF */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileDown className="h-5 w-5" />
-            Generar Reporte PDF
+            Generar Reportes PDF
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -264,28 +322,69 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-            <Button
-              onClick={handleGeneratePDF}
-              disabled={reportLoading || !pdfStartDate || !pdfEndDate}
-              className="w-full"
-            >
-              {reportLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generando...
-                </>
-              ) : (
-                <>
-                  <FileDown className="mr-2 h-4 w-4" />
-                  Generar Reporte PDF de Maquinaria
-                </>
-              )}
-            </Button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Button
+                onClick={handleGenerateMachineryPDF}
+                disabled={
+                  machineryReportLoading || !pdfStartDate || !pdfEndDate
+                }
+                className="w-full"
+                variant="default"
+              >
+                {machineryReportLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Reporte por Tipo de Maquinaria
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleGenerateDriverPDF}
+                disabled={driverReportLoading || !pdfStartDate || !pdfEndDate}
+                className="w-full"
+                variant="default"
+              >
+                {driverReportLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Reporte por Chofer
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleGenerateRoutePDF}
+                disabled={routeReportLoading || !pdfStartDate || !pdfEndDate}
+                className="w-full"
+                variant="default"
+              >
+                {routeReportLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generando...
+                  </>
+                ) : (
+                  <>
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Reporte por Ruta
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Vista previa del PDF en Modal */}
+      {/* Vista previa del PDF en Modal - Maquinaria */}
       {machineryReport && (
         <MachineryReportViewer
           reportData={machineryReport}
@@ -295,6 +394,36 @@ export default function Dashboard() {
           onOpenChange={(open) => {
             if (!open) {
               setMachineryReport(null);
+            }
+          }}
+        />
+      )}
+
+      {/* Vista previa del PDF en Modal - Choferes */}
+      {driverReport && (
+        <DriverConsumptionReportViewer
+          reportData={driverReport}
+          startDate={pdfStartDate}
+          endDate={pdfEndDate}
+          open={!!driverReport}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDriverReport(null);
+            }
+          }}
+        />
+      )}
+
+      {/* Vista previa del PDF en Modal - Rutas */}
+      {routeReport && (
+        <RouteConsumptionReportViewer
+          reportData={routeReport}
+          startDate={pdfStartDate}
+          endDate={pdfEndDate}
+          open={!!routeReport}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRouteReport(null);
             }
           }}
         />

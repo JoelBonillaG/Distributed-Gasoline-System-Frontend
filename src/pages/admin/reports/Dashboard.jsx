@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { subDays } from "date-fns";
 import {
   BarChart3,
   Route,
@@ -14,6 +15,8 @@ import {
   MapPin,
   Gauge,
   Fuel,
+  CalendarIcon,
+  FileDown,
 } from "lucide-react";
 import { PageHeading } from "@/components/ui/typography/Heading";
 import {
@@ -31,9 +34,13 @@ import {
   TableRow,
 } from "@/components/ui/shadcn/table";
 import { Badge } from "@/components/ui/shadcn/badge";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
+import { Button } from "@/components/ui/shadcn/button";
 import FuelConsumptionChart from "@/components/fuel/FuelConsumptionChart";
 import fuelService from "@/services/fuel.service";
 import { toast } from "sonner";
+import MachineryReportViewer from "@/components/admin/reports/MachineryReportViewer";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -46,6 +53,24 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [driversLoading, setDriversLoading] = useState(true);
   const [routesLoading, setRoutesLoading] = useState(true);
+
+  // Estados para el generador de PDF
+  const getLocalDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const [pdfStartDate, setPdfStartDate] = useState(() => {
+    const date = subDays(new Date(), 30);
+    return getLocalDateString(date);
+  });
+  const [pdfEndDate, setPdfEndDate] = useState(() => {
+    return getLocalDateString(new Date());
+  });
+  const [machineryReport, setMachineryReport] = useState(null);
+  const [reportLoading, setReportLoading] = useState(false);
 
   useEffect(() => {
     fetchKPIs();
@@ -89,6 +114,32 @@ export default function Dashboard() {
       toast.error("Error al cargar el resumen de rutas");
     } finally {
       setRoutesLoading(false);
+    }
+  };
+
+  const handleGeneratePDF = async () => {
+    if (!pdfStartDate || !pdfEndDate) {
+      toast.error("Por favor selecciona un rango de fechas");
+      return;
+    }
+
+    setReportLoading(true);
+    try {
+      const data = await fuelService.generateMachineryTypeReport(
+        pdfStartDate,
+        pdfEndDate
+      );
+      setMachineryReport(data);
+      toast.success("Reporte generado exitosamente");
+    } catch (error) {
+      console.error("Error al generar el PDF:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Error al generar el reporte PDF";
+      toast.error(errorMessage);
+    } finally {
+      setReportLoading(false);
     }
   };
 
@@ -159,6 +210,95 @@ export default function Dashboard() {
           color="green"
         />
       </div>
+
+      {/* Generador de Reporte PDF */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileDown className="h-5 w-5" />
+            Generar Reporte PDF
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="pdfStartDate"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Fecha Inicio
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="pdfStartDate"
+                    type="date"
+                    value={pdfStartDate}
+                    max={pdfEndDate}
+                    onChange={(e) => {
+                      setPdfStartDate(e.target.value);
+                    }}
+                  />
+                  <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="pdfEndDate"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Fecha Fin
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="pdfEndDate"
+                    type="date"
+                    value={pdfEndDate}
+                    min={pdfStartDate}
+                    max={getLocalDateString(new Date())}
+                    onChange={(e) => {
+                      setPdfEndDate(e.target.value);
+                    }}
+                  />
+                  <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+            </div>
+            <Button
+              onClick={handleGeneratePDF}
+              disabled={reportLoading || !pdfStartDate || !pdfEndDate}
+              className="w-full"
+            >
+              {reportLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Generar Reporte PDF de Maquinaria
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Vista previa del PDF en Modal */}
+      {machineryReport && (
+        <MachineryReportViewer
+          reportData={machineryReport}
+          startDate={pdfStartDate}
+          endDate={pdfEndDate}
+          open={!!machineryReport}
+          onOpenChange={(open) => {
+            if (!open) {
+              setMachineryReport(null);
+            }
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-1 gap-6">
         {/* Gráfico de consumo de combustible */}
@@ -400,9 +540,7 @@ export default function Dashboard() {
                           key={route.routeId}
                           className="cursor-pointer hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent transition-all border-b group"
                           onClick={() =>
-                            navigate(
-                              `/dashboard/routes/${route.routeId}/trips`
-                            )
+                            navigate(`/dashboard/routes/${route.routeId}/trips`)
                           }
                         >
                           <TableCell>
@@ -472,7 +610,8 @@ export default function Dashboard() {
                               >
                                 {route.efficiency.toLocaleString("es-ES", {
                                   maximumFractionDigits: 2,
-                                })}%
+                                })}
+                                %
                               </Badge>
                             ) : (
                               <span className="text-muted-foreground text-sm">

@@ -172,6 +172,28 @@ const fuelService = {
       throw error;
     }
   },
+
+  /**
+   * Obtener reporte de tipos de maquinaria
+   * @param {string} startDate - Fecha de inicio (formato YYYY-MM-DD)
+   * @param {string} endDate - Fecha de fin (formato YYYY-MM-DD)
+   * @returns {Promise<Object>} Datos del reporte por tipo de maquinaria
+   * Formato: { period, generatedAt, totalTrips, totalEstimated, totalActual, globalEfficiency, machineryTypes: [...] }
+   */
+  async generateMachineryTypeReport(startDate, endDate) {
+    try {
+      const response = await api.get("/fuel/reports/machinery-type", {
+        params: {
+          startDate,
+          endDate,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error al generar reporte de tipos de maquinaria:", error);
+      throw error;
+    }
+  },
 };
 
 export default fuelService;

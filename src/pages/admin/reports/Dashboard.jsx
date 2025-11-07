@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { subDays } from "date-fns";
 import {
   BarChart3,
   Route,
@@ -14,6 +15,10 @@ import {
   MapPin,
   Gauge,
   Fuel,
+  CalendarIcon,
+  FileDown,
+  Truck,
+  UserCircle,
 } from "lucide-react";
 import { PageHeading } from "@/components/ui/typography/Heading";
 import {
@@ -31,9 +36,15 @@ import {
   TableRow,
 } from "@/components/ui/shadcn/table";
 import { Badge } from "@/components/ui/shadcn/badge";
+import { Input } from "@/components/ui/shadcn/input";
+import { Label } from "@/components/ui/shadcn/label";
+import { Button } from "@/components/ui/shadcn/button";
 import FuelConsumptionChart from "@/components/fuel/FuelConsumptionChart";
 import fuelService from "@/services/fuel.service";
 import { toast } from "sonner";
+import MachineryReportViewer from "@/components/admin/reports/MachineryReportViewer";
+import DriverConsumptionReportViewer from "@/components/admin/reports/DriverConsumptionReportViewer";
+import RouteConsumptionReportViewer from "@/components/admin/reports/RouteConsumptionReportViewer";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -46,6 +57,28 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [driversLoading, setDriversLoading] = useState(true);
   const [routesLoading, setRoutesLoading] = useState(true);
+
+  // Estados para el generador de PDF
+  const getLocalDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const [pdfStartDate, setPdfStartDate] = useState(() => {
+    const date = subDays(new Date(), 30);
+    return getLocalDateString(date);
+  });
+  const [pdfEndDate, setPdfEndDate] = useState(() => {
+    return getLocalDateString(new Date());
+  });
+  const [machineryReport, setMachineryReport] = useState(null);
+  const [driverReport, setDriverReport] = useState(null);
+  const [routeReport, setRouteReport] = useState(null);
+  const [machineryReportLoading, setMachineryReportLoading] = useState(false);
+  const [driverReportLoading, setDriverReportLoading] = useState(false);
+  const [routeReportLoading, setRouteReportLoading] = useState(false);
 
   useEffect(() => {
     fetchKPIs();
@@ -89,6 +122,84 @@ export default function Dashboard() {
       toast.error("Error al cargar el resumen de rutas");
     } finally {
       setRoutesLoading(false);
+    }
+  };
+
+  const handleGenerateMachineryPDF = async () => {
+    if (!pdfStartDate || !pdfEndDate) {
+      toast.error("Por favor selecciona un rango de fechas");
+      return;
+    }
+
+    setMachineryReportLoading(true);
+    try {
+      const data = await fuelService.generateMachineryTypeReport(
+        pdfStartDate,
+        pdfEndDate
+      );
+      setMachineryReport(data);
+      toast.success("Reporte de maquinaria generado exitosamente");
+    } catch (error) {
+      console.error("Error al generar el PDF:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Error al generar el reporte PDF";
+      toast.error(errorMessage);
+    } finally {
+      setMachineryReportLoading(false);
+    }
+  };
+
+  const handleGenerateDriverPDF = async () => {
+    if (!pdfStartDate || !pdfEndDate) {
+      toast.error("Por favor selecciona un rango de fechas");
+      return;
+    }
+
+    setDriverReportLoading(true);
+    try {
+      const data = await fuelService.generateDriverConsumptionReport(
+        pdfStartDate,
+        pdfEndDate
+      );
+      setDriverReport(data);
+      toast.success("Reporte de choferes generado exitosamente");
+    } catch (error) {
+      console.error("Error al generar el PDF:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Error al generar el reporte PDF";
+      toast.error(errorMessage);
+    } finally {
+      setDriverReportLoading(false);
+    }
+  };
+
+  const handleGenerateRoutePDF = async () => {
+    if (!pdfStartDate || !pdfEndDate) {
+      toast.error("Por favor selecciona un rango de fechas");
+      return;
+    }
+
+    setRouteReportLoading(true);
+    try {
+      const data = await fuelService.generateRouteConsumptionReport(
+        pdfStartDate,
+        pdfEndDate
+      );
+      setRouteReport(data);
+      toast.success("Reporte de rutas generado exitosamente");
+    } catch (error) {
+      console.error("Error al generar el PDF:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Error al generar el reporte PDF";
+      toast.error(errorMessage);
+    } finally {
+      setRouteReportLoading(false);
     }
   };
 
@@ -159,6 +270,248 @@ export default function Dashboard() {
           color="green"
         />
       </div>
+
+      {/* Sección de Reportes PDF */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                <FileDown className="h-6 w-6 text-primary" />
+                Reportes en PDF
+              </CardTitle>
+              <p className="text-muted-foreground mt-1">
+                Genera reportes detallados de consumo de combustible
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Selector de fechas compartido */}
+          <div className="space-y-4 pb-4 border-b">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+              <h3 className="text-lg font-semibold">Rango de Fechas</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="pdfStartDate"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Fecha Inicio
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="pdfStartDate"
+                    type="date"
+                    value={pdfStartDate}
+                    max={pdfEndDate}
+                    onChange={(e) => {
+                      setPdfStartDate(e.target.value);
+                    }}
+                    className="w-full"
+                  />
+                  <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="pdfEndDate"
+                  className="text-sm font-medium text-foreground"
+                >
+                  Fecha Fin
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="pdfEndDate"
+                    type="date"
+                    value={pdfEndDate}
+                    min={pdfStartDate}
+                    max={getLocalDateString(new Date())}
+                    onChange={(e) => {
+                      setPdfEndDate(e.target.value);
+                    }}
+                    className="w-full"
+                  />
+                  <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cards de reportes individuales */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Reporte de Maquinaria */}
+            <div className="border rounded-lg p-5 hover:border-primary/50 transition-colors">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                    <Truck className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      Tipo de Maquinaria
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Consumo por tipo de vehículo
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Analiza el consumo de combustible agrupado por tipo de
+                  maquinaria (Liviana, Pesada, etc.)
+                </p>
+                <Button
+                  onClick={handleGenerateMachineryPDF}
+                  disabled={
+                    machineryReportLoading || !pdfStartDate || !pdfEndDate
+                  }
+                  className="w-full"
+                  variant="default"
+                >
+                  {machineryReportLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Generar Reporte
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Reporte de Choferes */}
+            <div className="border rounded-lg p-5 hover:border-primary/50 transition-colors">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                    <UserCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">
+                      Consumo por Chofer
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Análisis por conductor
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Evalúa el rendimiento y consumo de combustible de cada chofer
+                  en el período seleccionado
+                </p>
+                <Button
+                  onClick={handleGenerateDriverPDF}
+                  disabled={driverReportLoading || !pdfStartDate || !pdfEndDate}
+                  className="w-full"
+                  variant="default"
+                >
+                  {driverReportLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Generar Reporte
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Reporte de Rutas */}
+            <div className="border rounded-lg p-5 hover:border-primary/50 transition-colors">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                    <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">Consumo por Ruta</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Análisis por ruta
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Revisa el consumo de combustible y eficiencia de cada ruta
+                  configurada en el sistema
+                </p>
+                <Button
+                  onClick={handleGenerateRoutePDF}
+                  disabled={routeReportLoading || !pdfStartDate || !pdfEndDate}
+                  className="w-full"
+                  variant="default"
+                >
+                  {routeReportLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generando...
+                    </>
+                  ) : (
+                    <>
+                      <FileDown className="mr-2 h-4 w-4" />
+                      Generar Reporte
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Vista previa del PDF en Modal - Maquinaria */}
+      {machineryReport && (
+        <MachineryReportViewer
+          reportData={machineryReport}
+          startDate={pdfStartDate}
+          endDate={pdfEndDate}
+          open={!!machineryReport}
+          onOpenChange={(open) => {
+            if (!open) {
+              setMachineryReport(null);
+            }
+          }}
+        />
+      )}
+
+      {/* Vista previa del PDF en Modal - Choferes */}
+      {driverReport && (
+        <DriverConsumptionReportViewer
+          reportData={driverReport}
+          startDate={pdfStartDate}
+          endDate={pdfEndDate}
+          open={!!driverReport}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDriverReport(null);
+            }
+          }}
+        />
+      )}
+
+      {/* Vista previa del PDF en Modal - Rutas */}
+      {routeReport && (
+        <RouteConsumptionReportViewer
+          reportData={routeReport}
+          startDate={pdfStartDate}
+          endDate={pdfEndDate}
+          open={!!routeReport}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRouteReport(null);
+            }
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-1 gap-6">
         {/* Gráfico de consumo de combustible */}
@@ -400,9 +753,7 @@ export default function Dashboard() {
                           key={route.routeId}
                           className="cursor-pointer hover:bg-gradient-to-r hover:from-primary/5 hover:to-transparent transition-all border-b group"
                           onClick={() =>
-                            navigate(
-                              `/dashboard/routes/${route.routeId}/trips`
-                            )
+                            navigate(`/dashboard/routes/${route.routeId}/trips`)
                           }
                         >
                           <TableCell>
@@ -472,7 +823,8 @@ export default function Dashboard() {
                               >
                                 {route.efficiency.toLocaleString("es-ES", {
                                   maximumFractionDigits: 2,
-                                })}%
+                                })}
+                                %
                               </Badge>
                             ) : (
                               <span className="text-muted-foreground text-sm">

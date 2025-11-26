@@ -114,6 +114,23 @@ const driversService = {
   },
 
   /**
+   * Actualiza una licencia de un conductor
+   * @param {number} driverId - ID del conductor
+   * @param {number} licenseId - ID de la licencia
+   * @param {Object} data - Datos a actualizar (todos opcionales)
+   * @param {number} [data.licenseTypeId] - ID del tipo de licencia
+   * @param {string} [data.number] - Número de licencia
+   * @param {string} [data.issuedAt] - Fecha de emisión (ISO string)
+   * @param {string} [data.expiresAt] - Fecha de vencimiento (ISO string)
+   * @param {string} [data.status] - Estado (VALID, EXPIRED, SUSPENDED)
+   * @returns {Promise<import('../types/driver-types').DriverLicense>}
+   */
+  async updateLicense(driverId, licenseId, data) {
+    const response = await api.put(`/drivers/${driverId}/licenses/${licenseId}`, data);
+    return response.data;
+  },
+
+  /**
    * Suspende una licencia
    * @param {number} driverId - ID del conductor
    * @param {number} licenseId - ID de la licencia

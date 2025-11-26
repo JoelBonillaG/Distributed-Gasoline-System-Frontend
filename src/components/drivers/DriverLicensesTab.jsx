@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Shield, Plus, Ban, RotateCcw } from "lucide-react";
+import { Shield, Plus, Ban, RotateCcw, Edit } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { Button } from "@/components/ui/shadcn/button";
@@ -16,6 +16,7 @@ import {
 import DataTable from "@/components/ui/table/data-table";
 import driversService from "@/services/drivers.service";
 import CreateLicenseDialog from "./CreateLicenseDialog";
+import EditLicenseDialog from "./EditLicenseDialog";
 import {
   LICENSE_STATUS_MAP,
   LICENSE_STATUS_COLORS,
@@ -29,6 +30,10 @@ import {
  */
 const DriverLicensesTab = ({ driver, onRefresh }) => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editDialog, setEditDialog] = useState({
+    open: false,
+    license: null,
+  });
   const [suspendDialog, setSuspendDialog] = useState({
     open: false,
     license: null,
@@ -158,6 +163,19 @@ const DriverLicensesTab = ({ driver, onRefresh }) => {
 
     return (
       <div className="flex gap-1 justify-end">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => {
+            setEditDialog({
+              open: true,
+              license,
+            });
+          }}
+          title="Editar licencia"
+        >
+          <Edit className="size-4" />
+        </Button>
         {canSuspend && (
           <Button
             size="icon"
@@ -308,6 +326,21 @@ const DriverLicensesTab = ({ driver, onRefresh }) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog para editar licencia */}
+      <EditLicenseDialog
+        open={editDialog.open}
+        driverId={driver.driverId}
+        license={editDialog.license}
+        onOpenChange={(open) =>
+          setEditDialog({ open, license: null })
+        }
+        onSuccess={() => {
+          if (onRefresh) {
+            onRefresh();
+          }
+        }}
+      />
     </div>
   );
 };

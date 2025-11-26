@@ -80,3 +80,43 @@ export const useRestoreDriver = () => {
     },
   });
 };
+
+export const useCreateLicense = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ driverId, data }) => driversService.createLicense(driverId, data),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["drivers", variables.driverId] });
+    },
+  });
+};
+
+export const useUpdateLicense = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ driverId, licenseId, data }) => driversService.updateLicense(driverId, licenseId, data),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["drivers", variables.driverId] });
+    },
+  });
+};
+
+export const useSuspendLicense = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ driverId, licenseId }) => driversService.suspendLicense(driverId, licenseId),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["drivers", variables.driverId] });
+    },
+  });
+};
+
+export const useReactivateLicense = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ driverId, licenseId }) => driversService.reactivateLicense(driverId, licenseId),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["drivers", variables.driverId] });
+    },
+  });
+};

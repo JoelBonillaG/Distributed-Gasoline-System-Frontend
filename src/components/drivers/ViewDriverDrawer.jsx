@@ -45,14 +45,22 @@ const ViewDriverDrawer = ({ open, driverId, onOpenChange }) => {
       const driverData = await driversService.getDriverById(driverId);
       setDriver(driverData);
 
-      // Fetch user data
+      // Fetch user data (including inactive users)
       if (driverData.userId) {
         try {
-          const userData = await getUser(driverData.userId);
+          // Intentar primero con includeInactive=true para obtener usuarios inactivos
+          const userData = await getUser(driverData.userId, true);
           setUser(userData);
         } catch (err) {
           console.error("Error loading user:", err);
-          setUser(null);
+          // Si falla, intentar sin includeInactive como fallback
+          try {
+            const userData = await getUser(driverData.userId, false);
+            setUser(userData);
+          } catch (fallbackErr) {
+            console.error("Error loading user (fallback):", fallbackErr);
+            setUser(null);
+          }
         }
       }
     } catch (error) {

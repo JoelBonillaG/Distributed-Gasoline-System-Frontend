@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
-import { Eye, Pencil, Trash2, Plus, Truck } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Eye, Pencil, Trash2, Plus, Truck, Undo2, Ban } from "lucide-react";
 import { toast } from "sonner";
-import { useAllDrivers, useDeleteDriver } from "@/hooks/use-drivers";
+import { useAllDrivers, useDeleteDriver, useInactiveDrivers, useRestoreDriver } from "@/hooks/use-drivers";
 import { useAllUsers } from "@/hooks/use-users";
 import {
   AVAILABILITY_COLORS,
@@ -33,19 +33,34 @@ import ViewDriverDrawer from "@/components/drivers/ViewDriverDrawer";
  * Página principal de gestión de conductores
  */
 const DriversPage = () => {
+  // ========== STATE ==========
+  const [showDeleted, setShowDeleted] = useState(false);
+
   // ========== HOOKS ==========
-  const { data: drivers = [], isLoading, refetch } = useAllDrivers();
+  const { 
+    data: drivers = [], 
+    isLoading: isLoadingActive, 
+    refetch: refetchActive 
+  } = useAllDrivers();
+  
+  const { 
+    data: inactiveDrivers = [], 
+    isLoading: isLoadingInactive, 
+    refetch: refetchInactive 
+  } = useInactiveDrivers({ enabled: showDeleted });
+  
   const { data: users = [] } = useAllUsers();
   const deleteDriverMutation = useDeleteDriver();
+  const restoreDriverMutation = useRestoreDriver();
 
   // ========== ENRICHED DATA ==========
   /**
    * Enriquecer conductores con información de usuarios
    */
-  const enrichedDrivers = useMemo(() => {
-    if (!drivers.length || !users.length) return drivers;
+  const enrichDrivers = useCallback((driversList) => {
+    if (!driversList.length || !users.length) return driversList;
     
-    return drivers.map(driver => {
+    return driversList.map(driver => {
       const user = users.find(u => (u.userId || u.id) === driver.userId);
       
       return {
@@ -59,12 +74,24 @@ const DriversPage = () => {
         licenseTypes: driver.licenses?.map(l => l.licenseType).filter(Boolean).join(", ") || "—",
       };
     });
-  }, [drivers, users]);
+  }, [users]);
 
-  // ========== STATE ==========
-  const [selectedDriver, setSelectedDriver] = useState(null);
-  
+  const enrichedDrivers = useMemo(() => {
+    return enrichDrivers(drivers);
+  }, [drivers, enrichDrivers]);
+
+  const enrichedInactiveDrivers = useMemo(() => {
+    return enrichDrivers(inactiveDrivers);
+  }, [inactiveDrivers, enrichDrivers]);
+
+  const tableData = useMemo(() => {
+    return showDeleted ? enrichedInactiveDrivers : enrichedDrivers;
+  }, [showDeleted, enrichedDrivers, enrichedInactiveDrivers]);
+
+  const currentLoading = showDeleted ? isLoadingInactive : isLoadingActive;
+
   // Modal states
+  const [selectedDriver, setSelectedDriver] = useState(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -76,10 +103,17 @@ const DriversPage = () => {
     isDeleting: false
   });
 
+  // Restore dialog state
+  const [restoreDialog, setRestoreDialog] = useState({
+    open: false,
+    driver: null,
+    isRestoring: false
+  });
+
   // ========== HANDLERS ==========
 
   /**
-   * Confirma y ejecuta eliminación
+   * Confirma y ejecuta eliminación lógica
    */
   const handleDeleteConfirm = async () => {
     const { driver } = deleteDialog;
@@ -90,13 +124,41 @@ const DriversPage = () => {
     try {
       await deleteDriverMutation.mutateAsync(driver.driverId);
       
-      toast.success(`Conductor #${driver.driverId} eliminado`);
+      toast.success(`Conductor #${driver.driverId} eliminado lógicamente`);
       setDeleteDialog({ open: false, driver: null, isDeleting: false });
+      refetchActive();
+      if (showDeleted) {
+        refetchInactive();
+      }
     } catch (error) {
       console.error("Error deleting driver:", error);
       const message = error.response?.data?.message || "Error al eliminar conductor";
       toast.error(message);
       setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
+    }
+  };
+
+  /**
+   * Confirma y ejecuta restauración
+   */
+  const handleRestoreConfirm = async () => {
+    const { driver } = restoreDialog;
+    if (!driver) return;
+
+    setRestoreDialog(prev => ({ ...prev, isRestoring: true }));
+
+    try {
+      await restoreDriverMutation.mutateAsync(driver.driverId);
+      
+      toast.success(`Conductor #${driver.driverId} restaurado`);
+      setRestoreDialog({ open: false, driver: null, isRestoring: false });
+      refetchInactive();
+      refetchActive();
+    } catch (error) {
+      console.error("Error restoring driver:", error);
+      const message = error.response?.data?.message || "Error al restaurar conductor";
+      toast.error(message);
+      setRestoreDialog(prev => ({ ...prev, isRestoring: false }));
     }
   };
 
@@ -183,6 +245,38 @@ const DriversPage = () => {
   const rowActions = (row) => {
     const driver = row.original;
     
+    if (showDeleted) {
+      return (
+        <div className="flex gap-1 justify-end">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              setSelectedDriver(driver);
+              setIsViewOpen(true);
+            }}
+            title="Ver"
+          >
+            <Eye className="size-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              setRestoreDialog({
+                open: true,
+                driver,
+                isRestoring: false
+              });
+            }}
+            title="Restaurar"
+          >
+            <Undo2 className="size-4 text-green-600" />
+          </Button>
+        </div>
+      );
+    }
+    
     return (
       <div className="flex gap-1 justify-end">
         <Button
@@ -233,23 +327,39 @@ const DriversPage = () => {
         subtitle="Administra los conductores y sus licencias de conducir."
         icon={Truck}
         actions={
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="mr-2 size-4" />
-            Nuevo conductor
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant={showDeleted ? "outline" : "secondary"}
+              size="icon"
+              onClick={() => setShowDeleted((prev) => !prev)}
+              title={
+                showDeleted
+                  ? "Ver conductores activos"
+                  : "Ver conductores eliminados"
+              }
+            >
+              {showDeleted ? <Truck className="size-4" /> : <Ban className="size-4" />}
+            </Button>
+            {!showDeleted && (
+              <Button onClick={() => setIsCreateOpen(true)}>
+                <Plus className="mr-2 size-4" />
+                Nuevo conductor
+              </Button>
+            )}
+          </div>
         }
       />
 
       <div className="rounded-xl border bg-card">
         <div className="p-4">
-          {isLoading ? (
+          {currentLoading ? (
             <div className="text-sm text-muted-foreground">Cargando conductores…</div>
           ) : (
             <DataTable
               columns={columns}
-              data={enrichedDrivers}
+              data={tableData}
               rowActions={rowActions}
-              emptyMessage="No hay conductores registrados"
+              emptyMessage={showDeleted ? "No hay conductores eliminados" : "No hay conductores registrados"}
             />
           )}
         </div>
@@ -261,9 +371,9 @@ const DriversPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar conductor?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción eliminará permanentemente al conductor{" "}
-              <span className="font-semibold">#{deleteDialog.driver?.driverId}</span>.
-              Esta acción no se puede deshacer.
+              Esta acción deshabilitará al conductor{" "}
+              <span className="font-semibold">#{deleteDialog.driver?.driverId}</span>{" "}
+              y también deshabilitará su usuario asociado. Puedes restaurarlo más tarde desde la vista de conductores eliminados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -281,18 +391,54 @@ const DriversPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Restore Confirmation Dialog */}
+      <AlertDialog open={restoreDialog.open} onOpenChange={(open) => !open && setRestoreDialog({ open: false, driver: null, isRestoring: false })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Restaurar conductor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción reactivará al conductor{" "}
+              <span className="font-semibold">#{restoreDialog.driver?.driverId}</span>{" "}
+              y también reactivará su usuario asociado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={restoreDialog.isRestoring}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRestoreConfirm}
+              disabled={restoreDialog.isRestoring}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Restaurar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Modals y Drawer */}
       <CreateDriverDialog 
         open={isCreateOpen} 
         onOpenChange={setIsCreateOpen} 
-        onSuccess={refetch} 
+        onSuccess={() => {
+          refetchActive();
+          if (showDeleted) {
+            refetchInactive();
+          }
+        }} 
       />
       
       <EditDriverDialog 
         open={isEditOpen} 
         driver={selectedDriver} 
         onOpenChange={setIsEditOpen} 
-        onSuccess={refetch} 
+        onSuccess={() => {
+          refetchActive();
+          if (showDeleted) {
+            refetchInactive();
+          }
+        }} 
       />
       
       <ViewDriverDrawer 

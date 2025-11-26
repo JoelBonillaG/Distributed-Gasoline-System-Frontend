@@ -125,7 +125,7 @@ const ViewDriverDrawer = ({ open, driverId, onOpenChange }) => {
 
               {/* TAB: Licencias */}
               <TabsContent value="licenses" className="mt-0 h-full">
-                <DriverLicensesTab driver={driver} />
+                <DriverLicensesTab driver={driver} onRefresh={loadDriverData} />
               </TabsContent>
             </Tabs>
           )}

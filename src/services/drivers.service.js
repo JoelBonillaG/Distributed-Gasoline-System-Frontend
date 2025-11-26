@@ -47,12 +47,32 @@ const driversService = {
   },
 
   /**
-   * Elimina un conductor
+   * Elimina un conductor (eliminación lógica)
    * @param {number} id - ID del conductor
    * @returns {Promise<void>}
    */
   async deleteDriver(id) {
     await api.delete(`/drivers/${id}`);
+  },
+
+  /**
+   * Obtiene lista de conductores inactivos/eliminados
+   * @returns {Promise<import('../types/driver-types').Driver[]>}
+   */
+  async getInactiveDrivers() {
+    const response = await api.get('/drivers/inactive');
+    const driversList = Array.isArray(response.data) ? response.data : response.data.drivers || [];
+    return driversList;
+  },
+
+  /**
+   * Restaura un conductor eliminado lógicamente
+   * @param {number} id - ID del conductor
+   * @returns {Promise<import('../types/driver-types').Driver>}
+   */
+  async restoreDriver(id) {
+    const response = await api.post(`/drivers/${id}/undelete`);
+    return response.data;
   },
 
   // ========== CRUD LICENSES ==========
@@ -79,43 +99,41 @@ const driversService = {
 
   /**
    * Crea una nueva licencia para un conductor
-   * @param {import('../types/driver-types').CreateLicenseDto} data - Datos de la licencia
+   * @param {number} driverId - ID del conductor
+   * @param {Object} data - Datos de la licencia
+   * @param {number} data.licenseTypeId - ID del tipo de licencia
+   * @param {string} data.number - Número de licencia
+   * @param {string} data.issuedAt - Fecha de emisión (ISO string)
+   * @param {string} data.expiresAt - Fecha de vencimiento (ISO string)
+   * @param {string} [data.status] - Estado (VALID, EXPIRED, SUSPENDED)
    * @returns {Promise<import('../types/driver-types').DriverLicense>}
    */
-  async createLicense(data) {
-    const response = await api.post('/drivers/licenses', data);
-    return response.data;
-  },
-
-  /**
-   * Actualiza una licencia existente
-   * @param {number} licenseId - ID de la licencia
-   * @param {import('../types/driver-types').UpdateLicenseDto} data - Datos a actualizar
-   * @returns {Promise<import('../types/driver-types').DriverLicense>}
-   */
-  async updateLicense(licenseId, data) {
-    const response = await api.put(`/drivers/licenses/${licenseId}`, data);
+  async createLicense(driverId, data) {
+    const response = await api.post(`/drivers/${driverId}/licenses`, data);
     return response.data;
   },
 
   /**
    * Suspende una licencia
+   * @param {number} driverId - ID del conductor
    * @param {number} licenseId - ID de la licencia
-   * @param {string} reason - Razón de la suspensión
+   * @param {string} [reason] - Razón de la suspensión (opcional)
    * @returns {Promise<import('../types/driver-types').DriverLicense>}
    */
-  async suspendLicense(licenseId, reason) {
-    const response = await api.post(`/drivers/licenses/${licenseId}/suspend`, { reason });
+  async suspendLicense(driverId, licenseId, reason) {
+    const response = await api.post(`/drivers/${driverId}/licenses/${licenseId}/suspend`, { reason });
     return response.data;
   },
 
   /**
-   * Elimina una licencia
+   * Reactiva una licencia suspendida
+   * @param {number} driverId - ID del conductor
    * @param {number} licenseId - ID de la licencia
-   * @returns {Promise<void>}
+   * @returns {Promise<import('../types/driver-types').DriverLicense>}
    */
-  async deleteLicense(licenseId) {
-    await api.delete(`/drivers/licenses/${licenseId}`);
+  async reactivateLicense(driverId, licenseId) {
+    const response = await api.post(`/drivers/${driverId}/licenses/${licenseId}/reactivate`);
+    return response.data;
   },
 
   // ========== CRUD LICENSE TYPES ==========

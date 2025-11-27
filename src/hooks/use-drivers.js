@@ -53,6 +53,70 @@ export const useDeleteDriver = () => {
     mutationFn: (driverId) => driversService.deleteDriver(driverId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["drivers"] });
+      qc.invalidateQueries({ queryKey: ["drivers", "inactive"] });
+    },
+  });
+};
+
+export const useInactiveDrivers = (options = {}) =>
+  useQuery({
+    queryKey: ["drivers", "inactive"],
+    queryFn: () => driversService.getInactiveDrivers(),
+    staleTime: 5 * 60 * 1000,
+    select: (data) => {
+      const driversList = Array.isArray(data) ? data : data.drivers || [];
+      return driversList;
+    },
+    ...options,
+  });
+
+export const useRestoreDriver = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (driverId) => driversService.restoreDriver(driverId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["drivers"] });
+      qc.invalidateQueries({ queryKey: ["drivers", "inactive"] });
+    },
+  });
+};
+
+export const useCreateLicense = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ driverId, data }) => driversService.createLicense(driverId, data),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["drivers", variables.driverId] });
+    },
+  });
+};
+
+export const useUpdateLicense = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ driverId, licenseId, data }) => driversService.updateLicense(driverId, licenseId, data),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["drivers", variables.driverId] });
+    },
+  });
+};
+
+export const useSuspendLicense = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ driverId, licenseId }) => driversService.suspendLicense(driverId, licenseId),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["drivers", variables.driverId] });
+    },
+  });
+};
+
+export const useReactivateLicense = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ driverId, licenseId }) => driversService.reactivateLicense(driverId, licenseId),
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ["drivers", variables.driverId] });
     },
   });
 };

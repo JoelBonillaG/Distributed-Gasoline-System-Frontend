@@ -17,8 +17,11 @@ export const getAllUsers = async () => {
   });
 };
 
-export const getUser = async (id) => {
-  const res = await api.get(`/users/${id}`);
+export const getUser = async (id, includeInactive = false) => {
+  const url = includeInactive 
+    ? `/users/${id}?includeInactive=true`
+    : `/users/${id}`;
+  const res = await api.get(url);
   return res.data;
 };
 

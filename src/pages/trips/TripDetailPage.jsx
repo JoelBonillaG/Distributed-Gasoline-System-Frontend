@@ -90,9 +90,20 @@ const formatDate = (timestamp) => {
 function TripRouteMap({ routeData, currentLocation, statusNumber, trip, isDriver, showDirections }) {
   const map = useMap();
   const routingControlsRef = React.useRef([]);
+  const markersRef = React.useRef([]);
 
   React.useEffect(() => {
     if (!routeData?.originLat || !routeData?.destinationLat) return;
+
+    // Limpiar marcadores anteriores
+    markersRef.current.forEach(marker => {
+      try {
+        map.removeLayer(marker);
+      } catch (e) {
+        // Ignorar errores
+      }
+    });
+    markersRef.current = [];
 
     // Limpiar controles anteriores de manera segura
     routingControlsRef.current.forEach(control => {
@@ -158,8 +169,8 @@ function TripRouteMap({ routeData, currentLocation, statusNumber, trip, isDriver
 
     routingControlsRef.current.push(plannedRouteControl);
 
-    // Si está en ruta y hay ubicación actual, también mostrar la ruta recorrida (origen → ubicación actual) en verde
-    if (statusNumber === 2 && currentLocation) {
+    // Si está en ruta, en revisión o terminado y hay ubicación actual, mostrar la ruta recorrida (origen → ubicación actual) en verde
+    if ((statusNumber === 2 || statusNumber === 3 || statusNumber === 4) && currentLocation) {
       const traveledRouteControl = window.L.Routing.control({
         waypoints: [
           window.L.latLng(originLat, originLng),
@@ -190,7 +201,7 @@ function TripRouteMap({ routeData, currentLocation, statusNumber, trip, isDriver
     ]);
 
     // Si hay ubicación actual, incluirla en los bounds
-    if (statusNumber === 2 && currentLocation) {
+    if ((statusNumber === 2 || statusNumber === 3 || statusNumber === 4) && currentLocation) {
       bounds.extend([currentLocation.lat, currentLocation.lng]);
     }
 
@@ -203,6 +214,17 @@ function TripRouteMap({ routeData, currentLocation, statusNumber, trip, isDriver
     }, 500); // Pequeño delay para asegurar que las rutas se rendericen
 
     return () => {
+      // Limpiar marcadores
+      markersRef.current.forEach(marker => {
+        try {
+          map.removeLayer(marker);
+        } catch (e) {
+          // Ignorar errores
+        }
+      });
+      markersRef.current = [];
+
+      // Limpiar controles de routing
       routingControlsRef.current.forEach(control => {
         try {
           if (control && map && map.hasControl && map.hasControl(control)) {
@@ -647,7 +669,7 @@ export default function TripDetailPage() {
                 <TripRouteMap
                   routeData={routeData}
                   currentLocation={
-                    statusNumber === 2 && trip.currentLat && trip.currentLng
+                    (statusNumber === 2 || statusNumber === 3 || statusNumber === 4) && trip.currentLat && trip.currentLng
                       ? { lat: trip.currentLat, lng: trip.currentLng }
                       : null
                   }
@@ -672,8 +694,8 @@ export default function TripDetailPage() {
                 </Marker>
               )}
 
-              {/* Marcador de ubicación actual (si está en ruta) */}
-              {statusNumber === 2 && trip.currentLat && trip.currentLng && (
+              {/* Marcador de ubicación actual (si está en ruta, revisión o terminado) */}
+              {(statusNumber === 2 || statusNumber === 3 || statusNumber === 4) && trip.currentLat && trip.currentLng && (
                 <Marker
                   position={[trip.currentLat, trip.currentLng]}
                   icon={L.icon({
@@ -711,16 +733,16 @@ export default function TripDetailPage() {
 
           </div>
           <div className="w-full px-4 pt-4">
-            {statusNumber === 2 && trip.currentLat && trip.currentLng && (
+            {(statusNumber === 2 || statusNumber === 3 || statusNumber === 4) && trip.currentLat && trip.currentLng && (
               <p className="text-xs text-muted-foreground">
-                🟢 Verde: Origen | 🔵 Azul: Ubicación actual | 🟠 Naranja: Destino
+                🟢 Verde: Origen | 🔵 Azul: Ubicación {statusNumber === 2 ? 'actual' : 'final'} | 🟠 Naranja: Destino
                 <br />
-                La línea <span className="font-medium text-green-600">verde sólida</span> muestra la ruta recorrida desde el origen hasta tu ubicación actual.
+                La línea <span className="font-medium text-green-600">verde sólida</span> muestra la ruta recorrida desde el origen hasta {statusNumber === 2 ? 'tu ubicación actual' : 'la ubicación donde se finalizó el viaje'}.
                 <br />
                 La línea <span className="font-medium text-blue-600">azul punteada</span> muestra la ruta planificada completa (origen → destino).
               </p>
             )}
-            {statusNumber !== 2 && (
+            {!(statusNumber === 2 || statusNumber === 3 || statusNumber === 4) && (
               <p className="text-xs text-muted-foreground">
                 🟢 Verde: Origen | 🟠 Naranja: Destino
                 <br />

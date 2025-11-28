@@ -22,21 +22,7 @@ import { Combobox } from "@/components/ui/inputs/combobox";
 import { Badge } from "@/components/ui/shadcn/badge";
 import { Loader2, X, ArrowLeft, Car } from "lucide-react";
 import vehiclesService from "@/services/vehicles.service";
-
-// Licencias por tipo de vehículo
-const LICENSE_OPTIONS = {
-  LIGHT: [
-    { value: "A", label: "Licencia A" },
-    { value: "B", label: "Licencia B" },
-    { value: "C", label: "Licencia C" },
-    { value: "F", label: "Licencia F" },
-  ],
-  HEAVY: [
-    { value: "D", label: "Licencia D" },
-    { value: "E", label: "Licencia E" },
-    { value: "G", label: "Licencia G" },
-  ],
-};
+import { licenseTypesService } from "@/services/license-types.service";
 
 // Validadores
 const validators = {
@@ -77,18 +63,21 @@ const validators = {
     const n = Number(v);
     if (!Number.isFinite(n)) return "El consumo base debe ser numérico";
     if (n <= 0) return "El consumo base debe ser mayor a 0";
+    if (n > 200) return "El consumo base no puede superar 200 L/100km";
     return "";
   },
   displacementCc: (v) => {
     const n = Number(v);
     if (!Number.isFinite(n)) return "La cilindrada debe ser numérica";
     if (n <= 0) return "La cilindrada debe ser mayor a 0";
+    if (n > 20000) return "La cilindrada no puede superar 20,000 cc";
     return "";
   },
   powerHp: (v) => {
     const n = Number(v);
     if (!Number.isFinite(n)) return "La potencia debe ser numérica";
     if (n <= 0) return "La potencia debe ser mayor a 0";
+    if (n > 5000) return "La potencia no puede superar 5,000 HP";
     return "";
   },
   licenses: (licenses) => {
@@ -162,6 +151,52 @@ export default function EditVehicleModelPage() {
   });
 
   const [selectedLicense, setSelectedLicense] = React.useState("");
+  const [licenseTypes, setLicenseTypes] = React.useState([]);
+  const [isLoadingLicenses, setIsLoadingLicenses] = React.useState(true);
+
+  // Cargar tipos de licencia desde el endpoint
+  React.useEffect(() => {
+    const loadLicenseTypes = async () => {
+      setIsLoadingLicenses(true);
+      try {
+        const data = await licenseTypesService.findAll();
+        const types = Array.isArray(data) ? data : (data.items || []);
+        // Ordenar alfabéticamente por código
+        const sorted = types.sort((a, b) => {
+          const codeA = (a.code || '').toUpperCase();
+          const codeB = (b.code || '').toUpperCase();
+          return codeA.localeCompare(codeB);
+        });
+        setLicenseTypes(sorted);
+      } catch (error) {
+        console.error("Error loading license types:", error);
+        toast.error("Error al cargar tipos de licencia");
+      } finally {
+        setIsLoadingLicenses(false);
+      }
+    };
+    loadLicenseTypes();
+  }, []);
+
+  // Obtener opciones de licencias según el tipo de vehículo
+  const getLicenseOptions = React.useMemo(() => {
+    if (isLoadingLicenses || !licenseTypes.length) return [];
+    
+    // LIGHT vehicles: licencias ordinarias (isProfessional = false)
+    // HEAVY vehicles: licencias profesionales (isProfessional = true)
+    const filtered = licenseTypes.filter(lt => {
+      if (formData.machineType === "LIGHT") {
+        return !lt.isProfessional; // Ordinarias para vehículos livianos
+      } else {
+        return lt.isProfessional; // Profesionales para vehículos pesados
+      }
+    });
+
+    return filtered.map(lt => ({
+      value: lt.code,
+      label: `Licencia ${lt.code}${lt.description ? ` - ${lt.description}` : ''}`,
+    }));
+  }, [licenseTypes, formData.machineType, isLoadingLicenses]);
 
   // Cargar datos del vehículo
   React.useEffect(() => {
@@ -604,6 +639,8 @@ export default function EditVehicleModelPage() {
                       id="baselineLPer100km"
                       type="number"
                       step="0.001"
+                      min="0.001"
+                      max="200"
                       value={formData.engine.baselineLPer100km}
                       onChange={(e) =>
                         handleEngineChange("baselineLPer100km", parseFloat(e.target.value) || 0)
@@ -629,6 +666,8 @@ export default function EditVehicleModelPage() {
                       id="displacementCc"
                       type="number"
                       step="0.01"
+                      min="0.01"
+                      max="20000"
                       value={formData.engine.displacementCc}
                       onChange={(e) =>
                         handleEngineChange("displacementCc", parseFloat(e.target.value) || 0)
@@ -652,6 +691,8 @@ export default function EditVehicleModelPage() {
                       id="powerHp"
                       type="number"
                       step="0.01"
+                      min="0.01"
+                      max="5000"
                       value={formData.engine.powerHp}
                       onChange={(e) => handleEngineChange("powerHp", parseFloat(e.target.value) || 0)}
                       onBlur={() => handleBlur("powerHp")}
@@ -685,7 +726,8 @@ export default function EditVehicleModelPage() {
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <Combobox
-                        options={LICENSE_OPTIONS[formData.machineType] || []}
+                        options={getLicenseOptions}
+                        disabled={isPending || isLoadingLicenses}
                         value={selectedLicense}
                         onChange={setSelectedLicense}
                         placeholder="Selecciona una licencia..."

@@ -1,5 +1,26 @@
 import api from "./api";
 
+/**
+ * Obtener detalle del error del backend
+ * Prioriza: details > message > data.message > data.detail > fallback
+ * @param {Object} error - Error de la API
+ * @param {string} fallback - Mensaje por defecto
+ * @returns {string} Mensaje de error
+ */
+export const getErrorDetail = (error, fallback = "Ha ocurrido un error") => {
+  // El error puede venir de diferentes formas según cómo se maneje
+  const errorData = error?.response?.data || error?.data || error;
+  
+  // Prioridad: details > message > data.message > data.detail
+  return (
+    errorData?.details ||
+    errorData?.message ||
+    error?.message ||
+    errorData?.detail ||
+    fallback
+  );
+};
+
 const vehiclesService = {
   /**
    * Obtener todos los modelos de vehículos

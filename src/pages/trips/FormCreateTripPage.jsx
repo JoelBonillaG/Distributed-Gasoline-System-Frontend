@@ -422,7 +422,12 @@ export default function FormCreateTripPage() {
                     value: 3,
                     message: "Mínimo 3 caracteres",
                   },
+                  maxLength: {
+                    value: 100,
+                    message: "Máximo 100 caracteres",
+                  },
                 })}
+                maxLength={100}
               />
               {routeForm.formState.errors.name && (
                 <p className="text-sm text-destructive mt-1">
@@ -436,7 +441,12 @@ export default function FormCreateTripPage() {
               <Input
                 {...routeForm.register("originName", {
                   required: "El origen es obligatorio",
+                  maxLength: {
+                    value: 200,
+                    message: "Máximo 200 caracteres",
+                  },
                 })}
+                maxLength={200}
                 placeholder="Selecciona en el mapa..."
                 disabled={!origin}
               />
@@ -452,7 +462,12 @@ export default function FormCreateTripPage() {
               <Input
                 {...routeForm.register("destinationName", {
                   required: "El destino es obligatorio",
+                  maxLength: {
+                    value: 200,
+                    message: "Máximo 200 caracteres",
+                  },
                 })}
+                maxLength={200}
                 placeholder="Selecciona en el mapa..."
                 disabled={!destination}
               />
@@ -469,11 +484,16 @@ export default function FormCreateTripPage() {
                 type="number"
                 step="0.01"
                 min="0"
+                max="50000"
                 {...routeForm.register("distanceKm", {
                   required: "La distancia es obligatoria",
                   min: {
                     value: 0,
                     message: "Debe ser mayor o igual a 0",
+                  },
+                  max: {
+                    value: 50000,
+                    message: "La distancia no puede superar 50,000 km",
                   },
                 })}
                 readOnly

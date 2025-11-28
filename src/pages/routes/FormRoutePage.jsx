@@ -434,8 +434,13 @@ export default function FormRoutePage() {
                     value: 3,
                     message: "Mínimo 3 caracteres",
                   },
+                  maxLength: {
+                    value: 100,
+                    message: "Máximo 100 caracteres",
+                  },
                 })}
                 disabled={isReadOnly}
+                maxLength={100}
                 className={isReadOnly ? "bg-muted" : ""}
               />
               {errors.name && (
@@ -449,9 +454,14 @@ export default function FormRoutePage() {
               <Input
                 {...register("originName", {
                   required: "El origen es obligatorio",
+                  maxLength: {
+                    value: 200,
+                    message: "Máximo 200 caracteres",
+                  },
                 })}
                 placeholder="Selecciona en el mapa..."
                 disabled={isReadOnly || (!origin && !isViewMode)}
+                maxLength={200}
                 className={isReadOnly ? "bg-muted" : ""}
               />
               {errors.originName && (
@@ -465,9 +475,14 @@ export default function FormRoutePage() {
               <Input
                 {...register("destinationName", {
                   required: "El destino es obligatorio",
+                  maxLength: {
+                    value: 200,
+                    message: "Máximo 200 caracteres",
+                  },
                 })}
                 placeholder="Selecciona en el mapa..."
                 disabled={isReadOnly || (!destination && !isViewMode)}
+                maxLength={200}
                 className={isReadOnly ? "bg-muted" : ""}
               />
               {errors.destinationName && (
@@ -484,11 +499,16 @@ export default function FormRoutePage() {
                 type="number"
                 step="0.01"
                 min="0"
+                max="50000"
                 {...register("distanceKm", {
                   required: "La distancia es obligatoria",
                   min: {
                     value: 0,
                     message: "Debe ser mayor o igual a 0",
+                  },
+                  max: {
+                    value: 50000,
+                    message: "La distancia no puede superar 50,000 km",
                   },
                 })}
                 readOnly

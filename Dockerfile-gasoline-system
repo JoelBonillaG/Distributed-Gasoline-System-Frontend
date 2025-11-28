@@ -6,12 +6,12 @@ WORKDIR /app
 # Copiamos package.json y package-lock.json primero
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm install
-
-# Variables que se pasan desde docker-compose
-ARG VITE_API_URL
+# Variables que se pasan desde docker-compose (deben estar ANTES del npm install)
+ARG VITE_API_URL=http://localhost:8080
 ENV VITE_API_URL=$VITE_API_URL
+
+# Instalar dependencias (incluyendo devDependencies para el build)
+RUN npm ci
 
 # Copiamos el resto del código
 COPY . .

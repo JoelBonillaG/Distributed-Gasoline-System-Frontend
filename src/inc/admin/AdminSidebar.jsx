@@ -450,19 +450,6 @@ export default function AdminSidebar() {
         </SidebarGroup>
 
         <SidebarSeparator className="sidebar-divider my-2" />
-
-        <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
-            Documentación
-          </SidebarGroupLabel>
-          <SidebarGroupContent className="overflow-hidden">
-            <SidebarMenu>
-              {MENU.docs.map((item) => (
-                <NavItem key={item.to} {...item} collapsed={collapsed} />
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter

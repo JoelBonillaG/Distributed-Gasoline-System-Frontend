@@ -1,21 +1,24 @@
 version: "3.9"
 
 services:
-  hospital_frontend:
+  gasoline_frontend:
     build:
       context: .
-      dockerfile: Dockerfile-hospital-frontend
+      dockerfile: Dockerfile-gasoline-system
       args:
-        - VITE_API_URL=http://localhost:8080
-    container_name: hospital_frontend
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:8080}
+    container_name: gasoline_system_frontend
     ports:
       - "5174:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
     networks:
-      - hospital_network
+      - gasoline_network
 
 volumes:
-  hospital_data:
+  gasoline_data:
 
 networks:
-  hospital_network:
+  gasoline_network:
     driver: bridge

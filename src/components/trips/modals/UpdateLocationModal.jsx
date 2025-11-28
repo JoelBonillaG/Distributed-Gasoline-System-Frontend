@@ -309,13 +309,16 @@ export default function UpdateLocationModal({ trip, open, onOpenChange, onSucces
               type="number"
               step="0.01"
               min="0"
+              max="50000"
               readOnly={isCalculatingDistance}
               className={isCalculatingDistance ? "bg-muted" : ""}
               {...register("currentDistance", {
                 validate: (value) => {
                   if (!value) return true;
                   const num = parseFloat(value);
-                  return (!isNaN(num) && num >= 0) || "La distancia debe ser mayor o igual a 0";
+                  if (isNaN(num) || num < 0) return "La distancia debe ser mayor o igual a 0";
+                  if (num > 50000) return "La distancia no puede superar 50,000 km";
+                  return true;
                 },
               })}
               placeholder="Se calculará automáticamente"

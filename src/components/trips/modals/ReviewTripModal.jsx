@@ -142,12 +142,19 @@ export default function ReviewTripModal({ trip, open, onOpenChange, onSuccess })
               type="number"
               step="0.1"
               min={trip?.odometerStart || 0}
+              max="10000000"
               {...register("odometerEnd", {
                 required: "El odómetro final es obligatorio",
                 validate: (value) => {
                   const num = parseFloat(value);
                   const start = trip?.odometerStart || 0;
-                  return (!isNaN(num) && num > start) || `Debe ser mayor al odómetro inicial (${start} km)`;
+                  if (isNaN(num) || num <= start) {
+                    return `Debe ser mayor al odómetro inicial (${start} km)`;
+                  }
+                  if (num > 10000000) {
+                    return "El odómetro no puede superar 10,000,000 km";
+                  }
+                  return true;
                 },
               })}
               placeholder={trip?.odometerStart?.toString() || "0"}
@@ -219,12 +226,17 @@ export default function ReviewTripModal({ trip, open, onOpenChange, onSuccess })
             <Textarea
               id="reviewComment"
               rows={4}
+              maxLength={1000}
               {...register("reviewComment", {
                 required: requiresComment ? "El comentario es obligatorio cuando la desviación supera el 3%" : false,
                 minLength: requiresComment ? {
                   value: 10,
                   message: "El comentario debe tener al menos 10 caracteres",
                 } : undefined,
+                maxLength: {
+                  value: 1000,
+                  message: "El comentario no puede superar 1,000 caracteres",
+                },
               })}
               placeholder="Explica cualquier observación sobre el viaje..."
             />

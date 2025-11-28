@@ -37,6 +37,7 @@ const validators = {
     const n = Number(v);
     if (!Number.isFinite(n)) return "La capacidad del tanque debe ser numérica";
     if (n <= 0) return "La capacidad debe ser mayor a 0";
+    if (n > 2000) return "La capacidad del tanque no puede superar 2,000 litros";
     return "";
   },
   odometerKm: (v) => {
@@ -44,6 +45,7 @@ const validators = {
     const n = Number(v);
     if (!Number.isFinite(n)) return "El odómetro debe ser numérico";
     if (n < 0) return "El odómetro no puede ser negativo";
+    if (n > 10000000) return "El odómetro no puede superar 10,000,000 km";
     return "";
   },
   serialVin: (v) => {
@@ -56,6 +58,7 @@ const validators = {
     const n = Number(v);
     if (!Number.isFinite(n)) return "El consumo base debe ser numérico";
     if (n <= 0) return "El consumo base debe ser mayor a 0";
+    if (n > 200) return "El consumo base no puede superar 200 L/100km";
     return "";
   },
 };
@@ -376,7 +379,8 @@ export default function CreateUnitDialog({ open, onOpenChange, onSuccess, defaul
                   id="tankCapacityL"
                   type="number"
                   step="0.01"
-                  min="0"
+                  min="0.01"
+                  max="2000"
                   value={formData.tankCapacityL}
                   onChange={(e) => handleChange("tankCapacityL", e.target.value)}
                   onBlur={() => handleBlur("tankCapacityL")}
@@ -393,8 +397,9 @@ export default function CreateUnitDialog({ open, onOpenChange, onSuccess, defaul
                 <Input
                   id="odometerKm"
                   type="number"
-                  step="0.01"
+                  step="0.1"
                   min="0"
+                  max="10000000"
                   value={formData.odometerKm}
                   onChange={(e) => handleChange("odometerKm", e.target.value)}
                   onBlur={() => handleBlur("odometerKm")}
@@ -432,8 +437,9 @@ export default function CreateUnitDialog({ open, onOpenChange, onSuccess, defaul
                 <Input
                   id="baselineOverrideLPer100km"
                   type="number"
-                  step="0.01"
-                  min="0"
+                  step="0.001"
+                  min="0.001"
+                  max="200"
                   value={formData.baselineOverrideLPer100km}
                   onChange={(e) => handleChange("baselineOverrideLPer100km", e.target.value)}
                   onBlur={() => handleBlur("baselineOverrideLPer100km")}

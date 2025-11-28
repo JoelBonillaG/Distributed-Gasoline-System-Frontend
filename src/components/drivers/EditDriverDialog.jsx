@@ -125,6 +125,7 @@ const EditDriverDialog = ({ open, driver, onOpenChange, onSuccess }) => {
       case "email":
         if (!s) return "Ingresa el correo electrónico.";
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return "Correo inválido.";
+        if (String(s).length > 255) return "Máximo 255 caracteres.";
         return "";
       case "phone":
         if (!s) return "Ingresa el teléfono.";
@@ -133,9 +134,11 @@ const EditDriverDialog = ({ open, driver, onOpenChange, onSuccess }) => {
         return "";
       case "firstName":
         if (!s) return "Ingresa los nombres.";
+        if (String(s).length > 60) return "Máximo 60 caracteres.";
         return "";
       case "lastName":
         if (!s) return "Ingresa los apellidos.";
+        if (String(s).length > 60) return "Máximo 60 caracteres.";
         return "";
       case "availability":
         if (!s) return "Selecciona la disponibilidad.";
@@ -279,6 +282,7 @@ const EditDriverDialog = ({ open, driver, onOpenChange, onSuccess }) => {
                 value={form.email}
                 onChange={(e) => handleChange("email", e.target.value)}
                 placeholder="correo@ejemplo.com"
+                maxLength={255}
               />
               {getErrorMessage("email") && (
                 <p className="text-xs text-destructive">{getErrorMessage("email")}</p>
@@ -293,6 +297,7 @@ const EditDriverDialog = ({ open, driver, onOpenChange, onSuccess }) => {
                 value={form.firstName}
                 onChange={(e) => handleChange("firstName", e.target.value)}
                 placeholder="Ej. Juan Carlos"
+                maxLength={60}
               />
               {getErrorMessage("firstName") && (
                 <p className="text-xs text-destructive">{getErrorMessage("firstName")}</p>
@@ -307,6 +312,7 @@ const EditDriverDialog = ({ open, driver, onOpenChange, onSuccess }) => {
                 value={form.lastName}
                 onChange={(e) => handleChange("lastName", e.target.value)}
                 placeholder="Ej. Pérez García"
+                maxLength={60}
               />
               {getErrorMessage("lastName") && (
                 <p className="text-xs text-destructive">{getErrorMessage("lastName")}</p>

@@ -27,6 +27,7 @@ const validators = {
     const n = Number(v);
     if (!Number.isFinite(n)) return "La capacidad del tanque debe ser numérica";
     if (n <= 0) return "La capacidad debe ser mayor a 0";
+    if (n > 2000) return "La capacidad del tanque no puede superar 2,000 litros";
     return "";
   },
   odometerKm: (v, currentOdometer) => {
@@ -35,6 +36,7 @@ const validators = {
     if (!Number.isFinite(n)) return "El odómetro debe ser numérico";
     if (n < 0) return "El odómetro no puede ser negativo";
     if (currentOdometer && n < currentOdometer) return `El odómetro no puede ser menor al actual (${currentOdometer} km)`;
+    if (n > 10000000) return "El odómetro no puede superar 10,000,000 km";
     return "";
   },
 };
@@ -272,7 +274,8 @@ export default function EditUnitDialog({ open, onOpenChange, unit, onSuccess }) 
               id="tankCapacityL"
               type="number"
               step="0.01"
-              min="0"
+              min="0.01"
+              max="2000"
               value={formData.tankCapacityL}
               onChange={(e) => handleChange("tankCapacityL", e.target.value)}
               onBlur={() => handleBlur("tankCapacityL")}
@@ -293,8 +296,9 @@ export default function EditUnitDialog({ open, onOpenChange, unit, onSuccess }) 
             <Input
               id="odometerKm"
               type="number"
-              step="0.01"
+              step="0.1"
               min={fullUnitData.odometerKm}
+              max="10000000"
               value={formData.odometerKm}
               onChange={(e) => handleChange("odometerKm", e.target.value)}
               onBlur={() => handleBlur("odometerKm")}

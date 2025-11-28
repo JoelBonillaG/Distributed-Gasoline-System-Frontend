@@ -24,7 +24,7 @@ import {
 import DataTable from "@/components/ui/table/data-table";
 import { PageHeading } from "@/components/ui/typography/Heading";
 import { Plus, Pencil, Trash2, Loader2, Car, Eye, FileText, CheckCircle, XCircle, Calendar } from "lucide-react";
-import vehiclesService from "@/services/vehicles.service";
+import vehiclesService, { getErrorDetail } from "@/services/vehicles.service";
 import ViewVehicleDrawer from "@/components/vehicles/ViewVehicleDrawer";
 import CreateVehicleDialog from "@/components/vehicles/CreateVehicleDialog";
 import EditVehicleDialog from "@/components/vehicles/EditVehicleDialog";
@@ -257,7 +257,7 @@ export default function LightVehiclesPage() {
       });
       await loadVehicles();
     } catch (e) {
-      const msg = e?.response?.data?.detail || e?.message || "Error al eliminar";
+      const msg = getErrorDetail(e, "Error al eliminar");
       toast.error(msg);
     } finally {
       setDeletePending(false);

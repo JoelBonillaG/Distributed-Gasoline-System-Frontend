@@ -3,6 +3,7 @@ import { Eye, Pencil, Trash2, Plus, Truck, Undo2, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { useAllDrivers, useDeleteDriver, useInactiveDrivers, useRestoreDriver } from "@/hooks/use-drivers";
 import { useAllUsers } from "@/hooks/use-users";
+import { getErrorDetail } from "@/services/drivers.service";
 import {
   AVAILABILITY_COLORS,
   AVAILABILITY_MAP
@@ -132,7 +133,7 @@ const DriversPage = () => {
       }
     } catch (error) {
       console.error("Error deleting driver:", error);
-      const message = error.response?.data?.message || "Error al eliminar conductor";
+      const message = getErrorDetail(error, "Error al eliminar conductor");
       toast.error(message);
       setDeleteDialog(prev => ({ ...prev, isDeleting: false }));
     }
@@ -156,7 +157,7 @@ const DriversPage = () => {
       refetchActive();
     } catch (error) {
       console.error("Error restoring driver:", error);
-      const message = error.response?.data?.message || "Error al restaurar conductor";
+      const message = getErrorDetail(error, "Error al restaurar conductor");
       toast.error(message);
       setRestoreDialog(prev => ({ ...prev, isRestoring: false }));
     }

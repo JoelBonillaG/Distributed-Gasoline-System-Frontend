@@ -92,26 +92,74 @@ const EditLicenseDialog = ({ open, driverId, license, onOpenChange, onSuccess })
   };
 
   const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    // Limpiar error del campo cuando se modifica
-    if (errors[field]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
+    setForm((prev) => {
+      const newForm = { ...prev, [field]: value };
+      
+      // Validar fechas en tiempo real
+      if (field === "issuedAt" || field === "expiresAt") {
+        // Si ambas fechas están presentes, validar
+        if (newForm.issuedAt && newForm.expiresAt) {
+          const issued = new Date(newForm.issuedAt);
+          const expires = new Date(newForm.expiresAt);
+          
+          setErrors((prev) => {
+            const newErrors = { ...prev };
+            if (expires <= issued) {
+              newErrors.expiresAt = "La fecha de vencimiento debe ser posterior a la fecha de emisión";
+            } else {
+              delete newErrors.expiresAt;
+            }
+            return newErrors;
+          });
+        } else {
+          // Si falta una fecha, limpiar el error
+          setErrors((prev) => {
+            const newErrors = { ...prev };
+            delete newErrors.expiresAt;
+            return newErrors;
+          });
+        }
+      } else {
+        // Para otros campos, limpiar error cuando se modifica
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+      }
+      
+      return newForm;
+    });
   };
 
   const validate = () => {
     const newErrors = {};
 
+    // Validar número de licencia si se proporciona
+    if (form.number && form.number.trim() !== "") {
+      if (form.number.trim().length > 40) {
+        newErrors.number = "El número de licencia no puede superar 40 caracteres";
+      }
+    }
+
     // Validar que expiresAt sea mayor que issuedAt si ambas están presentes
     if (form.issuedAt && form.expiresAt) {
       const issued = new Date(form.issuedAt);
       const expires = new Date(form.expiresAt);
-      if (expires <= issued) {
-        newErrors.expiresAt = "La fecha de vencimiento debe ser posterior a la fecha de emisión";
+      
+      // Validar que las fechas sean válidas
+      if (isNaN(issued.getTime())) {
+        newErrors.issuedAt = "La fecha de emisión no es válida";
+      }
+      if (isNaN(expires.getTime())) {
+        newErrors.expiresAt = "La fecha de vencimiento no es válida";
+      }
+      
+      // Validar que la fecha de vencimiento sea posterior a la de emisión
+      if (!isNaN(issued.getTime()) && !isNaN(expires.getTime())) {
+        if (expires <= issued) {
+          newErrors.expiresAt = "La fecha de vencimiento debe ser posterior a la fecha de emisión";
+        }
       }
     }
 
@@ -242,6 +290,8 @@ const EditLicenseDialog = ({ open, driverId, license, onOpenChange, onSuccess })
                 type="date"
                 value={form.issuedAt}
                 onChange={(e) => handleChange("issuedAt", e.target.value)}
+                max={form.expiresAt || undefined}
+                className={errors.issuedAt ? "border-destructive" : ""}
               />
               {errors.issuedAt && (
                 <p className="text-xs text-destructive">{errors.issuedAt}</p>
@@ -256,9 +306,16 @@ const EditLicenseDialog = ({ open, driverId, license, onOpenChange, onSuccess })
                 type="date"
                 value={form.expiresAt}
                 onChange={(e) => handleChange("expiresAt", e.target.value)}
+                min={form.issuedAt || undefined}
+                className={errors.expiresAt ? "border-destructive" : ""}
               />
               {errors.expiresAt && (
                 <p className="text-xs text-destructive">{errors.expiresAt}</p>
+              )}
+              {form.issuedAt && !errors.expiresAt && (
+                <p className="text-xs text-muted-foreground">
+                  Debe ser posterior a {new Date(form.issuedAt).toLocaleDateString('es-ES')}
+                </p>
               )}
             </div>
 

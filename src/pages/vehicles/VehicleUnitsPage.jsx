@@ -23,7 +23,7 @@ import {
 import DataTable from "@/components/ui/table/data-table";
 import { PageHeading } from "@/components/ui/typography/Heading";
 import { Plus, Pencil, Trash2, Loader2, Gauge, Eye } from "lucide-react";
-import vehiclesService from "@/services/vehicles.service";
+import vehiclesService, { getErrorDetail } from "@/services/vehicles.service";
 import CreateUnitDialog from "@/components/vehicles/CreateUnitDialog";
 import EditUnitDialog from "@/components/vehicles/EditUnitDialog";
 import ViewUnitDrawer from "@/components/vehicles/ViewUnitDrawer";
@@ -273,7 +273,7 @@ export default function VehicleUnitsPage() {
       setConfirmOpen(false);
       loadData();
     } catch (e) {
-      const msg = e?.response?.data?.detail || e?.message || "Error al eliminar unidad";
+      const msg = getErrorDetail(e, "Error al eliminar unidad");
       toast.error(msg);
     } finally {
       setDeletePending(false);

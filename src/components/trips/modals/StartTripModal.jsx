@@ -170,7 +170,7 @@ export default function StartTripModal({ trip, open, onOpenChange, onSuccess }) 
                     Ubicación obtenida automáticamente
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Puedes editar las coordenadas manualmente si lo necesitas para testing.
+                  Ingreso de coordenadas manuales (por motivos de presentación).
                   </p>
                 </div>
               </div>
@@ -194,7 +194,7 @@ export default function StartTripModal({ trip, open, onOpenChange, onSuccess }) 
           {/* Campos de entrada manual */}
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground">
-              Coordenadas (opcional - para testing)
+              Coordenadas (disponible por motivos de presentación)
             </Label>
             <p className="text-xs text-muted-foreground mb-3">
               Puedes ingresar las coordenadas manualmente o usar las obtenidas automáticamente arriba.

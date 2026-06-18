@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/shadcn/button";
 import { toast } from "sonner";
 
 function LoginFormComponent() {
-  const [identifier, setIdentifier] = useState(""); // DNI o Email
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
@@ -16,21 +16,16 @@ function LoginFormComponent() {
   const { login, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  // 🔍 Validación de DNI o Email
-  const isValidDni = (value) => /^\d{10}$/.test(value);
   const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (!identifier.trim()) {
-      newErrors.identifier = "El DNI o email es requerido";
-    } else if (!isValidDni(identifier) && !isValidEmail(identifier)) {
-      newErrors.identifier =
-        "Ingresa un DNI válido (10 dígitos) o un email válido";
-    }
+    if (!email.trim()) newErrors.email = "El correo electrónico es requerido";
+    else if (!isValidEmail(email))
+      newErrors.email = "Ingresa un correo electrónico válido";
 
-    if (!password) newErrors.password = "La contraseña es requerida";
+    if (!password.trim()) newErrors.password = "La contraseña es requerida";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -41,42 +36,81 @@ function LoginFormComponent() {
     if (!validateForm()) return;
 
     try {
-      const result = await login(identifier, password);
+      const result = await login(email, password);
+      console.log("Login result:", result);
 
       if (result.success) {
         toast.success("Inicio de sesión correcto", {
           id: "login-success",
           description: "Bienvenido de nuevo",
         });
-        navigate("/", { replace: true });
-      } else {
-        // Preferir el campo `error` que devuelve el backend cuando existe
-        const backendError = result.errorData?.error || result.errorData?.message || result.message;
-        toast.error(backendError || "Credenciales inválidas", { id: "login-error" });
+        navigate("/trips", { replace: true });
+        return;
       }
-    } catch (e) {
-      const backendError = e?.response?.data?.error || e?.response?.data?.message;
-      toast.error(backendError || "Error en el servidor. Intenta más tarde.", { id: "login-error" });
+
+      // Si llega aquí sin éxito explícito, tratamos como error
+      throw result;
+    } catch (error) {
+      const backend = error?.errorData || {};
+      console.log("Backend error data:", backend);
+      const code = backend?.grpc?.code;
+      const status = backend?.statusCode;
+
+      if (status === 400 && backend.code === "VALIDATION_ERROR") {
+        const fieldErrors = {};
+
+        // Convertimos el objeto del backend en formato { campo: mensaje }
+        if (backend.errors) {
+          Object.entries(backend.errors).forEach(([field, messages]) => {
+            fieldErrors[field] = Array.isArray(messages)
+              ? messages.join(", ")
+              : messages;
+          });
+        }
+
+        // Actualizamos los errores visuales
+        setErrors(fieldErrors);
+
+        // Mostramos un toast general
+        toast.error("Error de validación. Revisa los campos.", {
+          id: "validation-error",
+        });
+        return;
+      }
+
+      if (status === 401 || code === 16) {
+        toast.error("Credenciales inválidas", { id: "unauthenticated" });
+        return;
+      }
+
+      if (status === 404 || code === 5) {
+        toast.error("Usuario no encontrado", { id: "not-found" });
+        return;
+      }
+
+      toast.error(backend.message || "Error en el servidor", {
+        id: "login-error",
+      });
     }
   };
 
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* DNI o Email */}
+        {/* Email */}
         <div className="grid gap-2">
-          <Label htmlFor="identifier">DNI o Email</Label>
+          <Label htmlFor="email">Correo electrónico</Label>
           <Input
-            id="identifier"
-            name="identifier"
-            type="text"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="Ingresa tu DNI (10 dígitos) o tu email"
-            aria-invalid={!!errors.identifier}
+            id="email"
+            name="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="usuario@ejemplo.com"
+            aria-invalid={!!errors.email}
           />
-          {errors.identifier && (
-            <p className="text-xs text-red-500">{errors.identifier}</p>
+          {errors.email && (
+            <p className="text-xs text-red-500">{errors.email}</p>
           )}
         </div>
 
@@ -112,7 +146,11 @@ function LoginFormComponent() {
         </div>
 
         {/* Botón */}
-        <Button type="submit" disabled={isLoading} className="w-full">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full bg-[#FB923C]"
+        >
           {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </Button>
       </form>

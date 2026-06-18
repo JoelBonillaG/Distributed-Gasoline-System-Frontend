@@ -17,25 +17,41 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-clinic flex items-center justify-center p-4">
-          <div className="card max-w-md w-full text-center">
-            <h2 className="text-xl font-semibold text-red-600 mb-4">
+        <div className="min-h-screen flex items-center justify-center p-4 bg-background text-foreground transition-colors">
+          <div className="max-w-md w-full text-center border border-border rounded-lg shadow-lg bg-card/80 backdrop-blur-md p-6">
+            <h2 className="text-xl font-semibold text-red-500 mb-3">
               ¡Oops! Algo salió mal
             </h2>
-            <p className="text-gray-600 mb-4">
+
+            <p className="text-muted-foreground mb-5">
               Ha ocurrido un error inesperado en la aplicación.
             </p>
-            <details className="text-left bg-gray-50 p-3 rounded mb-4">
-              <summary className="cursor-pointer font-medium">
+
+            <details
+              className="
+              text-left text-sm rounded-md p-3 mb-5
+              bg-muted/50 text-muted-foreground
+              dark:bg-white/5 dark:text-gray-300
+              border border-border/50
+            "
+            >
+              <summary className="cursor-pointer font-medium hover:text-foreground">
                 Ver detalles del error
               </summary>
-              <pre className="text-xs mt-2 overflow-auto">
+              <pre className="mt-2 text-xs overflow-auto whitespace-pre-wrap break-all">
                 {this.state.error?.toString()}
               </pre>
             </details>
+
             <button
               onClick={() => window.location.reload()}
-              className="btn-primary"
+              className="
+    px-5 py-2 rounded-md font-medium text-white
+    bg-[#F97316] hover:bg-[#FF7A1C]
+    dark:bg-[#FF7A1C] dark:hover:bg-[#FFA047]
+    transition-all duration-300
+    focus:ring-2 focus:ring-offset-2 focus:ring-[#FF7A1C]/40
+  "
             >
               Recargar página
             </button>

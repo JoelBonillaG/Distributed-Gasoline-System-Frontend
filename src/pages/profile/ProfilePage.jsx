@@ -11,11 +11,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/shadcn/card";
-import {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from "@/components/ui/shadcn/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/shadcn/avatar";
 import { Separator } from "@/components/ui/shadcn/separator";
 import { Loader2 } from "lucide-react";
 import AuthContext from "@/context/AuthContext";
@@ -25,8 +21,8 @@ export default function ProfilePage() {
   const { user, updateUser } = React.useContext(AuthContext);
 
   const [form, setForm] = React.useState({
-    firstName: user?.first_name || "",
-    lastName: user?.last_name || "",
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
   });
 
   const [pending, setPending] = React.useState(false);
@@ -39,8 +35,8 @@ export default function ProfilePage() {
 
   const validate = () => {
     const e = {};
-    if (!form.firstName.trim()) e.firstName = "Required";
-    if (!form.lastName.trim()) e.lastName = "Required";
+    if (!form.firstName.trim()) e.firstName = "Campo obligatorio";
+    if (!form.lastName.trim()) e.lastName = "Campo obligatorio";
     return e;
   };
 
@@ -49,26 +45,23 @@ export default function ProfilePage() {
     const eValid = validate();
     if (Object.keys(eValid).length) {
       setErrors(eValid);
-      toast.error("Please complete the required fields.");
+      toast.error("Por favor completa los campos requeridos.");
       return;
     }
 
     setPending(true);
     try {
-      // Construir payload
       const payload = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
-        gender: form.gender || null, // si agregas gender al formulario
       };
 
-      // Llamar a tu endpoint de updateUser con el id del usuario
-      const res = await employees.updateProfile(user.id, payload);
-      updateUser(res);
+      const res = await employees.updateProfile(user.userId, payload);
 
-      toast.success("Profile updated successfully!");
+      updateUser(res);
+      toast.success("Perfil actualizado correctamente!");
     } catch (err) {
-      const msg = err?.response?.data?.detail || "Update failed";
+      const msg = err?.response?.data?.detail || "No se pudo actualizar.";
       toast.error(msg);
     } finally {
       setPending(false);
@@ -76,69 +69,107 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl rounded-2xl p-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground px-4 py-10">
+      <Card className="w-full max-w-md border border-border shadow-xl bg-card/80 backdrop-blur-md rounded-2xl">
         <CardHeader className="flex flex-col items-center space-y-4">
-          <Avatar className="h-28 w-28 bg-gray-500 dark:bg-gray-700 text-white flex items-center justify-center rounded-full text-4xl font-extrabold shadow-lg">
-            {user
-              ? `${user.first_name[0]?.toUpperCase()}${user.last_name[0]?.toUpperCase()}`
-              : "U"}
+          {/* Avatar con iniciales */}
+          <Avatar className="h-28 w-28 text-3xl font-bold bg-muted text-foreground ring-2 ring-border shadow-md">
+            <AvatarFallback>
+              {user
+                ? `${user?.firstName?.[0]?.toUpperCase() ?? ""}${
+                    user?.lastName?.[0]?.toUpperCase() ?? ""
+                  }`
+                : "U"}
+            </AvatarFallback>
           </Avatar>
-          <CardTitle className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Edit Profile
+
+          {/* Título dinámico */}
+          <CardTitle className="text-3xl font-semibold tracking-tight text-center">
+            Perfil de {user?.firstName} {user?.lastName}
           </CardTitle>
-          <CardDescription className="text-center text-gray-600 dark:text-gray-300">
-            Update your personal information below
+
+          <CardDescription className="text-center text-muted-foreground">
+            Actualiza tu información personal. El correo y teléfono son de solo
+            lectura.
           </CardDescription>
         </CardHeader>
 
-        <Separator className="my-6 border-t border-gray-200 dark:border-gray-700" />
+        <Separator className="my-5 opacity-60" />
 
+        {/* Formulario */}
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-5">
+            {/* Nombre */}
             <div className="grid gap-2">
-              <Label className="text-gray-900 dark:text-gray-100">
-                First name
-              </Label>
+              <Label htmlFor="firstName">Nombre</Label>
               <Input
+                id="firstName"
                 value={form.firstName}
                 onChange={(e) => onChange("firstName", e.target.value)}
-                placeholder="Your name"
-                className="rounded-lg shadow-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
+                placeholder="Tu nombre"
+                className="bg-background border-border focus-visible:ring-[var(--brand-1)]"
               />
               {errors.firstName && (
-                <p className="text-xs text-destructive dark:text-red-400">
-                  {errors.firstName}
-                </p>
+                <p className="text-xs text-destructive">{errors.firstName}</p>
               )}
             </div>
 
+            {/* Apellido */}
             <div className="grid gap-2">
-              <Label className="text-gray-900 dark:text-gray-100">
-                Last name
-              </Label>
+              <Label htmlFor="lastName">Apellido</Label>
               <Input
+                id="lastName"
                 value={form.lastName}
                 onChange={(e) => onChange("lastName", e.target.value)}
-                placeholder="Your last name"
-                className="rounded-lg shadow-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500"
+                placeholder="Tu apellido"
+                className="bg-background border-border focus-visible:ring-[var(--brand-1)]"
               />
               {errors.lastName && (
-                <p className="text-xs text-destructive dark:text-red-400">
-                  {errors.lastName}
-                </p>
+                <p className="text-xs text-destructive">{errors.lastName}</p>
               )}
+            </div>
+
+            {/* Email (solo lectura) */}
+            <div className="grid gap-2">
+              <Label htmlFor="email">Correo electrónico</Label>
+              <Input
+                id="email"
+                value={user?.email || ""}
+                disabled
+                readOnly
+                className="bg-muted text-muted-foreground cursor-not-allowed border-border"
+              />
+            </div>
+
+            {/* Teléfono (solo lectura) */}
+            <div className="grid gap-2">
+              <Label htmlFor="phone">Teléfono</Label>
+              <Input
+                id="phone"
+                value={user?.phone || ""}
+                disabled
+                readOnly
+                className="bg-muted text-muted-foreground cursor-not-allowed border-border"
+              />
             </div>
           </CardContent>
 
-          <CardFooter className="mt-6">
+          {/* Botón */}
+          <CardFooter className="mt-6 flex justify-end">
             <Button
               type="submit"
-              className="w-full py-3 text-lg font-medium bg-gray-400 hover:bg-gray-500 text-white dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg shadow-md transition-colors flex justify-center items-center"
               disabled={pending}
+              className="
+                bg-[#F97316] hover:bg-[#FB923C]
+                text-white font-medium rounded-lg
+                px-5 py-2 w-full md:w-auto
+                transition-all duration-300
+                shadow-md hover:shadow-[0_0_10px_rgba(249,115,22,0.6)]
+                flex items-center justify-center
+              "
             >
               {pending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-              Save changes
+              Guardar cambios
             </Button>
           </CardFooter>
         </form>

@@ -42,9 +42,12 @@
     --primary-hover: color-mix(in oklab, var(--brand-2), white 16%);
     --primary-active: color-mix(in oklab, var(--brand-3), black 8%);
 
-    /* Charts opcional */
-    --chart-1:oklch(.86 .19 48);
-    --chart-2:oklch(.74 .18 38);
+    /* Charts - Colores para pastillas de vehículos */
+    /* chart-1: Vehículos LIGHT (livianos) - Azul suave */
+    --chart-1:oklch(.65 .08 240);
+    /* chart-2: Vehículos HEAVY (pesados) - Púrpura suave */
+    --chart-2:oklch(.60 .10 300);
+    /* Otros charts para gráficas */
     --chart-3:oklch(.83 .17 64);
     --chart-4:oklch(.71 .06 20);
     --chart-5:oklch(.68 .08 80);
@@ -459,3 +462,117 @@ body{display:block!important;place-items:initial!important;min-height:100vh}
     }
 }
 
+/* Estilos base para Leaflet Routing Machine */
+.leaflet-routing-container {
+    padding: 0 !important;
+    background: var(--card) !important;
+    border: none !important;
+    box-shadow: none !important;
+    height: 100% !important;
+    width: 100% !important;
+    overflow-y: auto !important;
+    color: var(--foreground) !important;
+}
+
+/* Modo claro - hover solo para las filas individuales */
+.leaflet-routing-alt {
+    transition: background-color 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.leaflet-routing-alt:hover {
+    background-color: var(--muted) !important;
+}
+
+.leaflet-routing-alt.selected {
+    background-color: var(--accent) !important;
+}
+
+/* Estilos para las instrucciones individuales */
+.leaflet-routing-collapsible {
+    transition: background-color 0.2s ease !important;
+}
+
+.leaflet-routing-collapsible:hover {
+    background-color: var(--muted) !important;
+}
+
+/* Estilos para Leaflet Routing Machine - Modo oscuro */
+.dark .leaflet-routing-container {
+    background-color: var(--card) !important;
+    color: var(--foreground) !important;
+}
+
+.dark .leaflet-routing-container * {
+    color: var(--foreground) !important;
+}
+
+.dark .leaflet-routing-container h2,
+.dark .leaflet-routing-container h3,
+.dark .leaflet-routing-container h4,
+.dark .leaflet-routing-container p,
+.dark .leaflet-routing-container span,
+.dark .leaflet-routing-container div,
+.dark .leaflet-routing-container a,
+.dark .leaflet-routing-container label,
+.dark .leaflet-routing-container .leaflet-routing-instruction-text,
+.dark .leaflet-routing-container .leaflet-routing-instruction,
+.dark .leaflet-routing-container .leaflet-routing-instruction-distance {
+    color: var(--foreground) !important;
+}
+
+.dark .leaflet-routing-alt {
+    background-color: var(--card) !important;
+    border-top-color: var(--border) !important;
+    color: var(--foreground) !important;
+}
+
+/* Asegurar que las filas alternativas también tengan fondo oscuro */
+.dark .leaflet-routing-alt-minimized,
+.dark .leaflet-routing-alt-minimized:hover {
+    background-color: var(--card) !important;
+    color: var(--foreground) !important;
+}
+
+/* Eliminar hover en modo oscuro - quitar el gris completamente */
+.dark .leaflet-routing-alt:hover {
+    background-color: var(--card) !important;
+}
+
+.dark .leaflet-routing-alt.selected {
+    background-color: color-mix(in oklab, var(--primary), transparent 85%) !important;
+}
+
+/* Eliminar hover para las instrucciones colapsables en modo oscuro */
+.dark .leaflet-routing-collapsible {
+    background-color: var(--card) !important;
+}
+
+.dark .leaflet-routing-collapsible:hover {
+    background-color: var(--card) !important;
+}
+
+/* Evitar que el hover del contenedor afecte todo el panel */
+.dark .leaflet-routing-container:hover {
+    background-color: var(--card) !important;
+}
+
+/* Asegurar que todos los elementos internos mantengan el fondo oscuro */
+.dark .leaflet-routing-container .leaflet-routing-alternatives,
+.dark .leaflet-routing-container .leaflet-routing-summary,
+.dark .leaflet-routing-container .leaflet-routing-geocoders {
+    background-color: var(--card) !important;
+    color: var(--foreground) !important;
+}
+
+.dark .leaflet-routing-instruction {
+    border-bottom-color: var(--border) !important;
+}
+
+.dark .leaflet-routing-instruction-distance {
+    color: var(--muted-foreground) !important;
+}
+
+.dark .leaflet-routing-icon {
+    filter: invert(1) brightness(1.2) !important;
+}

@@ -21,6 +21,13 @@ const TITLE_MAP = {
     "settings": "Ajustes",
     "playground": "Playground",
     "docs": "Guías & Manuales",
+    "vehicles": "Vehículos",
+    "models": "Modelos",
+    "units": "Unidades",
+    "create": "Crear",
+    "edit": "Editar",
+    "view": "Ver",
+    "new": "Nuevo",
 };
 
 function pretty(seg) {

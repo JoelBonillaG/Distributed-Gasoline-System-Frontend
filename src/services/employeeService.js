@@ -36,29 +36,17 @@ const employees = {
     return res.data;
   },
 
-  async updateEmployee(id, data) {
-    const payload = {
-      first_name: data.firstName,
-      last_name: data.lastName,
-      gender: data.gender,
-    };
-
-    const res = await api.put(`/auth/users/${id}`, payload);
-    return res.data;
-  },
-
   async updateProfile(id, data) {
     const payload = {
-      first_name: data.firstName,
-      last_name: data.lastName,
-      gender: data.gender,
+      userId: Number(id),
+      firstName: data.firstName,
+      lastName: data.lastName,
     };
 
-    console.log("Sending", payload);
-    console.log("Id", id);
+    console.log("Enviando payload", payload);
+    const res = await api.post("/auth/update-fullname", payload);
+    console.log("Respuesta", res);
 
-    const res = await api.put(`/auth/users/${id}`, payload);
-    console.log("Res", res);
     return res.data;
   },
 };

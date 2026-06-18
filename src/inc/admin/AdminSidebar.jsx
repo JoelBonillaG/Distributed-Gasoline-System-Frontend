@@ -1,260 +1,581 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import {
-    Sidebar,
-    SidebarHeader,
-    SidebarContent,
-    SidebarFooter,
-    SidebarMenu,
-    SidebarMenuItem,
-    SidebarMenuButton,
-    SidebarSeparator,
-    SidebarGroup,
-    SidebarGroupLabel,
-    SidebarGroupContent,
-    useSidebar,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  useSidebar,
 } from "@/components/ui/shadcn/sidebar";
+import { Avatar } from "@/components/ui/shadcn/avatar";
 import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-} from "@/components/ui/shadcn/avatar";
-import {
-    Building2,
-    Heart,
-    FolderKanban,
-    Stethoscope,
-    BookText,
-    UserRound,
-    UserCog,
-    ClipboardList,
-    BarChart3,
-    FileText,
+  FolderKanban,
+  BookText,
+  BarChart3,
+  TestTube2,
+  Car,
+  ChevronDown,
+  User,
+  UserCog,
+  Truck,
+  Shield,
+  Route,
 } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import logoUrl from "@/assets/favicon.ico";
 import AuthContext from "@/context/AuthContext";
 import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "@/components/ui/shadcn/dropdown-menu";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/shadcn/collapsible";
 import Can from "@/utils/Can.jsx";
 
 function NavItem({ to, icon: Icon, label, collapsed, end = false }) {
-    return (
-        <SidebarMenuItem>
-            <SidebarMenuButton
-                asChild
-                tooltip={collapsed ? label : undefined}
-                className={`${collapsed ? "justify-center px-0" : "justify-start"}`}
-            >
-                <NavLink
-                    to={to}
-                    end={end}
-                    aria-label={label}
-                    className={[
-                        "group",
-                        collapsed
-                            ? "relative w-full grid place-items-center rounded-lg px-0 py-0.5"
-                            : "relative w-full flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-muted/60 text-foreground/90 aria-[current=page]:bg-accent aria-[current=page]:text-accent-foreground aria-[current=page]:ring-1 aria-[current=page]:ring-brand/20 aria-[current=page]:before:absolute aria-[current=page]:before:left-[-6px] aria-[current=page]:before:top-1/2 aria-[current=page]:before:-translate-y-1/2 aria-[current=page]:before:h-5 aria-[current=page]:before:w-[3px] aria-[current=page]:before:rounded-full aria-[current=page]:before:bg-brand",
-                    ].join(" ")}
-                >
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        tooltip={collapsed ? label : undefined}
+        className={`${collapsed ? "justify-center px-0" : "justify-start"}`}
+      >
+        <NavLink
+          to={to}
+          end={end}
+          aria-label={label}
+          className={[
+            "group",
+            collapsed
+              ? "relative w-full grid place-items-center rounded-lg px-0 py-0.5"
+              : "relative w-full flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-muted/60 text-foreground/90 aria-[current=page]:bg-accent aria-[current=page]:text-accent-foreground aria-[current=page]:ring-1 aria-[current=page]:ring-brand/20 aria-[current=page]:before:absolute aria-[current=page]:before:left-[-6px] aria-[current=page]:before:top-1/2 aria-[current=page]:before:-translate-y-1/2 aria-[current=page]:before:h-5 aria-[current=page]:before:w-[3px] aria-[current=page]:before:rounded-full aria-[current=page]:before:bg-brand",
+          ].join(" ")}
+        >
           <span
-              className={[
-                  collapsed
-                      ? "grid size-7 place-content-center shrink-0 rounded-md mx-0 my-0"
-                      : "grid size-7 place-content-center shrink-0 rounded-md",
-                  "bg-transparent hover:bg-brand-1/25",
-                  collapsed
-                      ? "group-aria-[current=page]:bg-accent group-aria-[current=page]:text-accent-foreground"
-                      : "aria-[current=page]:bg-brand-1/40",
-              ].join(" ")}
+            className={[
+              collapsed
+                ? "grid size-7 place-content-center shrink-0 rounded-md mx-0 my-0"
+                : "grid size-7 place-content-center shrink-0 rounded-md",
+              "bg-transparent hover:bg-brand-1/25",
+              collapsed
+                ? "group-aria-[current=page]:bg-accent group-aria-[current=page]:text-accent-foreground"
+                : "aria-[current=page]:bg-brand-1/40",
+            ].join(" ")}
           >
-            <Icon className={collapsed ? "size-3.5 shrink-0" : "size-4 shrink-0"} />
+            <Icon
+              className={collapsed ? "size-3.5 shrink-0" : "size-4 shrink-0"}
+            />
           </span>
-                    {!collapsed && <span className="truncate">{label}</span>}
-                </NavLink>
-            </SidebarMenuButton>
-        </SidebarMenuItem>
+          {!collapsed && <span className="truncate">{label}</span>}
+        </NavLink>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+function LightVehiclesCollapsibleMenu({ collapsed }) {
+  const location = useLocation();
+  const isLightVehiclesActive = location.pathname.startsWith("/vehicles/light");
+  const [isOpen, setIsOpen] = useState(isLightVehiclesActive);
+
+  // Si el sidebar está colapsado, mostramos solo el ícono sin collapsible
+  if (collapsed) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          asChild
+          tooltip="Vehículos Livianos"
+          className="justify-center px-0"
+        >
+          <NavLink
+            to="/vehicles/light/models"
+            aria-label="Vehículos Livianos"
+            className="group relative w-full grid place-items-center rounded-lg px-0 py-0.5"
+          >
+            <span
+              className={[
+                "grid size-7 place-content-center shrink-0 rounded-md mx-0 my-0",
+                "bg-transparent hover:bg-brand-1/25",
+                isLightVehiclesActive ? "bg-accent text-accent-foreground" : "",
+              ].join(" ")}
+            >
+              <Car className="size-3.5 shrink-0" />
+            </span>
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
     );
+  }
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            className={[
+              "w-full flex items-center justify-between gap-2 rounded-lg px-2 py-2 hover:bg-muted/60 text-foreground/90",
+              // Solo aplicar estilos activos cuando está cerrado
+              isLightVehiclesActive && !isOpen
+                ? "bg-accent text-accent-foreground ring-1 ring-brand/20 before:absolute before:left-[-6px] before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-full before:bg-brand"
+                : "",
+            ].join(" ")}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className={[
+                  "grid size-7 place-content-center shrink-0 rounded-md",
+                  "bg-transparent hover:bg-brand-1/25",
+                  isLightVehiclesActive && !isOpen ? "bg-brand-1/40" : "",
+                ].join(" ")}
+              >
+                <Car className="size-4 shrink-0" />
+              </span>
+              <span className="truncate">Vehículos Livianos</span>
+            </div>
+            <ChevronDown
+              className={`size-4 shrink-0 transition-transform duration-200 ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pl-9 pt-1 space-y-1 relative">
+          {/* Línea vertical al lado de las opciones */}
+          <div className="absolute left-[26px] top-2 bottom-2 w-[2px] bg-border/50" />
+
+          <NavLink
+            to="/vehicles/light/models"
+            className={({ isActive }) =>
+              [
+                "block rounded-md px-3 py-1.5 text-sm hover:bg-muted/60 transition-colors relative",
+                isActive
+                  ? "bg-muted text-foreground font-medium"
+                  : "text-foreground/80",
+              ].join(" ")
+            }
+          >
+            Modelos
+          </NavLink>
+          <NavLink
+            to="/vehicles/light/units"
+            className={({ isActive }) =>
+              [
+                "block rounded-md px-3 py-1.5 text-sm hover:bg-muted/60 transition-colors relative",
+                isActive
+                  ? "bg-muted text-foreground font-medium"
+                  : "text-foreground/80",
+              ].join(" ")
+            }
+          >
+            Unidades
+          </NavLink>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
+}
+
+function HeavyVehiclesCollapsibleMenu({ collapsed }) {
+  const location = useLocation();
+  const isHeavyVehiclesActive = location.pathname.startsWith("/vehicles/heavy");
+  const [isOpen, setIsOpen] = useState(isHeavyVehiclesActive);
+
+  // Si el sidebar está colapsado, mostramos solo el ícono sin collapsible
+  if (collapsed) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          asChild
+          tooltip="Vehículos Pesados"
+          className="justify-center px-0"
+        >
+          <NavLink
+            to="/vehicles/heavy/models"
+            aria-label="Vehículos Pesados"
+            className="group relative w-full grid place-items-center rounded-lg px-0 py-0.5"
+          >
+            <span
+              className={[
+                "grid size-7 place-content-center shrink-0 rounded-md mx-0 my-0",
+                "bg-transparent hover:bg-brand-1/25",
+                isHeavyVehiclesActive ? "bg-accent text-accent-foreground" : "",
+              ].join(" ")}
+            >
+              <Truck className="size-3.5 shrink-0" />
+            </span>
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <SidebarMenuItem>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton
+            className={[
+              "w-full flex items-center justify-between gap-2 rounded-lg px-2 py-2 hover:bg-muted/60 text-foreground/90",
+              // Solo aplicar estilos activos cuando está cerrado
+              isHeavyVehiclesActive && !isOpen
+                ? "bg-accent text-accent-foreground ring-1 ring-brand/20 before:absolute before:left-[-6px] before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-full before:bg-brand"
+                : "",
+            ].join(" ")}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className={[
+                  "grid size-7 place-content-center shrink-0 rounded-md",
+                  "bg-transparent hover:bg-brand-1/25",
+                  isHeavyVehiclesActive && !isOpen ? "bg-brand-1/40" : "",
+                ].join(" ")}
+              >
+                <Truck className="size-4 shrink-0" />
+              </span>
+              <span className="truncate">Vehículos Pesados</span>
+            </div>
+            <ChevronDown
+              className={`size-4 shrink-0 transition-transform duration-200 ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pl-9 pt-1 space-y-1 relative">
+          {/* Línea vertical al lado de las opciones */}
+          <div className="absolute left-[26px] top-2 bottom-2 w-[2px] bg-border/50" />
+
+          <NavLink
+            to="/vehicles/heavy/models"
+            className={({ isActive }) =>
+              [
+                "block rounded-md px-3 py-1.5 text-sm hover:bg-muted/60 transition-colors relative",
+                isActive
+                  ? "bg-muted text-foreground font-medium"
+                  : "text-foreground/80",
+              ].join(" ")
+            }
+          >
+            Modelos
+          </NavLink>
+          <NavLink
+            to="/vehicles/heavy/units"
+            className={({ isActive }) =>
+              [
+                "block rounded-md px-3 py-1.5 text-sm hover:bg-muted/60 transition-colors relative",
+                isActive
+                  ? "bg-muted text-foreground font-medium"
+                  : "text-foreground/80",
+              ].join(" ")
+            }
+          >
+            Unidades
+          </NavLink>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  );
 }
 
 export default function AdminSidebar() {
-    const { state } = useSidebar();
-    const collapsed = state === "collapsed";
-    const { user, logout } = useContext(AuthContext);
-    const navigate = useNavigate();
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-    const handleLogout = async () => {
-        await logout();
-        navigate("/login");
-    };
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
 
-    const MENU = {
-        reports: [
-            { to: "/admin/reports", icon: BarChart3, label: "Dashboard de Reportes", roles: ["ADMIN"] },
-            { to: "/admin/reports/export", icon: FileText, label: "Exportar Reportes", roles: ["ADMIN"] },
-        ],
-        clinic: [
-            { to: "/admin/employees", icon: UserCog, label: "Empleados", roles: ["ADMIN"] },
-            { to: "/admin/doctors", icon: Stethoscope, label: "Doctores", roles: ["ADMIN"] },
-            { to: "/admin/specialties", icon: ClipboardList, label: "Especialidades", roles: ["ADMIN"] },
-            { to: "/admin/centers", icon: Building2, label: "Centros médicos", roles: ["ADMIN"] },
-            { to: "/consultations", icon: ClipboardList, label: "Consultas médicas", roles: ["DOCTOR"] },
-            { to: "/patients", icon: UserRound, label: "Pacientes", roles: ["DOCTOR"] },
-        ],
-        platform: [{ to: "/admin/playground", icon: FolderKanban, label: "Playground", roles: ["ADMIN"] }],
-        docs: [{ to: "/admin/docs", icon: BookText, label: "Guías & Manuales" }],
-    };
+  const MENU = {
+    reports: [
+      {
+        to: "/dashboard",
+        icon: BarChart3,
+        label: "Dashboard",
+        roles: ["ADMIN"],
+      },
+    ],
+    routes: [
+      {
+        to: "/admin/users",
+        icon: User,
+        label: "Usuarios",
+        roles: ["ADMIN"],
+      },
+      {
+        to: "/drivers",
+        icon: UserCog,
+        label: "Conductores",
+        roles: ["ADMIN"],
+      },
+      {
+        to: "/license-types",
+        icon: Shield,
+        label: "Tipos de Licencia",
+        roles: ["ADMIN"],
+      },
+      {
+        to: "/routes",
+        icon: TestTube2,
+        label: "Rutas",
+        roles: ["ADMIN"],
+      },
+    ],
+    trips: [
+      {
+        to: "/trips",
+        icon: Route,
+        label: "Viajes",
+        roles: ["ADMIN", "SUPERVISOR", "DRIVER"],
+      },
+    ],
+    platform: [
+      {
+        to: "/admin/playground",
+        icon: FolderKanban,
+        label: "Playground",
+        roles: ["ADMIN"],
+      },
+    ],
+    docs: [{ to: "/admin/docs", icon: BookText, label: "Guías & Manuales" }],
+  };
 
-    return (
-        <Sidebar collapsible="icon" className="sidebar-surface border-r overflow-hidden">
-            <SidebarHeader className={collapsed ? "px-4 pt-3 pb-3" : "px-4 pt-6 pb-4"}>
-                <NavLink
-                    to="/"
-                    className={[
-                        "group flex items-center gap-3 rounded-md outline-none",
-                        "focus-visible:ring-2 focus-visible:ring-ring",
-                        collapsed ? "justify-center px-0" : "",
-                    ].join(" ")}
+  return (
+    <Sidebar
+      collapsible="icon"
+      className="sidebar-surface border-r overflow-hidden"
+    >
+      <SidebarHeader
+        className={collapsed ? "px-4 pt-3 pb-3" : "px-4 pt-6 pb-4"}
+      >
+        <NavLink
+          to="/"
+          className={[
+            "group flex items-center gap-3 rounded-md outline-none",
+            "focus-visible:ring-2 focus-visible:ring-ring",
+            collapsed ? "justify-center px-0" : "",
+          ].join(" ")}
+        >
+          <div className="relative grid size-9 shrink-0 rounded-xl overflow-hidden border border-[color-mix(in_oklab,var(--brand-1),transparent_55%)] bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)] backdrop-blur-md">
+            <img
+              src={logoUrl}
+              alt="HQ"
+              className="w-full h-full object-contain"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-xl pointer-events-none [background:conic-gradient(from_20deg_at_50%_50%,color-mix(in_oklab,var(--brand-1),transparent_85%),color-mix(in_oklab,var(--brand-2),transparent_88%),color-mix(in_oklab,var(--brand-3),transparent_85%),color-mix(in_oklab,#8ad2ff,transparent_90%),color-mix(in_oklab,#ffd38a,transparent_90%),color-mix(in_oklab,var(--brand-2),transparent_88%))] mix-blend-screen opacity-70 [padding:1px] [-webkit-mask:linear-gradient(#000_0_0)_content-box,linear-gradient(#000_0_0)] [mask-composite:exclude] [-webkit-mask-composite:xor]"
+            />
+          </div>
+          {!collapsed && (
+            <div className="leading-tight">
+              <p className="text-[1.05rem] font-semibold tracking-tight">
+                F<span className="text-sm relative -top-[1px]">&</span>Q
+              </p>
+              <p className="text-[0.8rem] text-muted-foreground">
+                Administración
+              </p>
+            </div>
+          )}
+        </NavLink>
+      </SidebarHeader>
+
+      <SidebarContent
+        className={collapsed ? "px-1 overflow-hidden" : "px-2 overflow-hidden"}
+      >
+        <Can allowedRoles={["ADMIN"]}>
+          <SidebarGroup>
+            <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+              Reportes & Analiticas
+            </SidebarGroupLabel>
+            <SidebarGroupContent className="overflow-hidden">
+              <SidebarMenu>
+                {MENU.reports.map((item) => (
+                  <NavItem key={item.to} {...item} collapsed={collapsed} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarSeparator className="sidebar-divider my-2" />
+        </Can>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+            Gestión
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="overflow-hidden">
+            <SidebarMenu>
+              {/* Vehículos con collapsible - Solo ADMIN */}
+              <Can allowedRoles={["ADMIN"]}>
+                <LightVehiclesCollapsibleMenu collapsed={collapsed} />
+                <HeavyVehiclesCollapsibleMenu collapsed={collapsed} />
+              </Can>
+
+              {/* Rutas - Solo ADMIN */}
+              <Can allowedRoles={["ADMIN"]}>
+                {MENU.routes
+                  .filter((i) => i.roles?.includes("ADMIN"))
+                  .map((item) => (
+                    <NavItem key={item.to} {...item} collapsed={collapsed} />
+                  ))}
+              </Can>
+
+              {/* Viajes - Todos los roles autenticados */}
+              {MENU.trips
+                .filter((i) => {
+                  const userRoles = Array.isArray(user?.roles)
+                    ? user.roles.map((r) => String(r).toUpperCase())
+                    : [];
+                  return i.roles?.some((role) => userRoles.includes(role));
+                })
+                .map((item) => (
+                  <NavItem key={item.to} {...item} collapsed={collapsed} />
+                ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator className="sidebar-divider my-2" />
+      </SidebarContent>
+
+      <SidebarFooter
+        className={`mt-auto border-t px-3 py-3 transition-colors duration-300 ${
+          collapsed ? "px-2 pt-2 pb-1" : ""
+        }`}
+      >
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={collapsed ? "Cuenta" : undefined}
+                  className={`group relative rounded-md overflow-hidden ${
+                    collapsed ? "justify-center px-0" : "justify-start"
+                  }`}
                 >
-                    <div className="relative grid size-9 shrink-0 rounded-xl overflow-hidden border border-[color-mix(in_oklab,var(--brand-1),transparent_55%)] bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)] backdrop-blur-md">
-                        <img src={logoUrl} alt="HQ" className="w-full h-full object-contain" />
-                        <span
-                            aria-hidden
-                            className="absolute inset-0 rounded-xl pointer-events-none [background:conic-gradient(from_20deg_at_50%_50%,color-mix(in_oklab,var(--brand-1),transparent_85%),color-mix(in_oklab,var(--brand-2),transparent_88%),color-mix(in_oklab,var(--brand-3),transparent_85%),color-mix(in_oklab,#8ad2ff,transparent_90%),color-mix(in_oklab,#ffd38a,transparent_90%),color-mix(in_oklab,var(--brand-2),transparent_88%))] mix-blend-screen opacity-70 [padding:1px] [-webkit-mask:linear-gradient(#000_0_0)_content-box,linear-gradient(#000_0_0)] [mask-composite:exclude] [-webkit-mask-composite:xor]"
-                        />
-                    </div>
+                  <button
+                    type="button"
+                    className={`
+                relative w-full flex items-center gap-2 rounded-md px-2 py-1.5
+                transition-all duration-200
+                bg-[color-mix(in_oklab,var(--brand-veil),transparent_90%)]
+                hover:bg-[color-mix(in_oklab,var(--brand-veil),transparent_70%)]
+                dark:bg-white/5
+                dark:hover:bg-white/10
+              `}
+                    aria-label="Cuenta"
+                  >
+                    <Avatar
+                      className={`
+                  flex items-center justify-center rounded-full text-white font-bold
+                  px-5 bg-gray-500 dark:bg-gray-600
+                `}
+                    >
+                      {user
+                        ? `${user.firstName?.[0]?.toUpperCase() ?? ""}${
+                            user.lastName?.[0]?.toUpperCase() ?? ""
+                          }`
+                        : "U"}
+                    </Avatar>
+
                     {!collapsed && (
-                        <div className="leading-tight">
-                            <p className="text-[1.05rem] font-semibold tracking-tight">
-                                H<span className="text-sm relative -top-[1px]">&</span>Q Hospital
-                            </p>
-                            <p className="text-[0.8rem] text-muted-foreground">Administración</p>
-                        </div>
-                    )}
-                </NavLink>
-            </SidebarHeader>
-
-            <SidebarContent className={collapsed ? "px-1 overflow-hidden" : "px-2 overflow-hidden"}>
-                <Can allowedRoles={["ADMIN"]}>
-                    <SidebarGroup>
-                        <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Reportes & Analytics</SidebarGroupLabel>
-                        <SidebarGroupContent className="overflow-hidden">
-                            <SidebarMenu>
-                                {MENU.reports.map((item) => (
-                                    <NavItem key={item.to} {...item} collapsed={collapsed} />
-                                ))}
-                            </SidebarMenu>
-                        </SidebarGroupContent>
-                    </SidebarGroup>
-                    <SidebarSeparator className="sidebar-divider my-2" />
-                </Can>
-
-                <SidebarGroup>
-                    <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Gestión clínica</SidebarGroupLabel>
-                    <SidebarGroupContent className="overflow-hidden">
-                        <SidebarMenu>
-                            <Can allowedRoles={["ADMIN"]}>
-                                {MENU.clinic.filter(i => i.roles?.includes("ADMIN")).map((item) => (
-                                    <NavItem key={item.to} {...item} collapsed={collapsed} />
-                                ))}
-                            </Can>
-                            <Can allowedRoles={["DOCTOR"]}>
-                                {MENU.clinic.filter(i => i.roles?.includes("DOCTOR")).map((item) => (
-                                    <NavItem key={item.to} {...item} collapsed={collapsed} />
-                                ))}
-                            </Can>
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-
-                <SidebarSeparator className="sidebar-divider my-2" />
-
-                <Can allowedRoles={["ADMIN"]}>
-                    <SidebarGroup>
-                        <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Plataforma</SidebarGroupLabel>
-                        <SidebarGroupContent className="overflow-hidden">
-                            <SidebarMenu>
-                                {MENU.platform.map((item) => (
-                                    <NavItem key={item.to} {...item} collapsed={collapsed} />
-                                ))}
-                            </SidebarMenu>
-                        </SidebarGroupContent>
-                    </SidebarGroup>
-                    <SidebarSeparator className="sidebar-divider my-2" />
-                </Can>
-
-                <SidebarGroup>
-                    <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Documentación</SidebarGroupLabel>
-                    <SidebarGroupContent className="overflow-hidden">
-                        <SidebarMenu>
-                            {MENU.docs.map((item) => (
-                                <NavItem key={item.to} {...item} collapsed={collapsed} />
-                            ))}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
-            </SidebarContent>
-
-            <SidebarFooter className={collapsed ? "mt-auto border-t px-2 pt-2 pb-1" : "mt-auto border-t px-3 py-3"}>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <SidebarMenuButton
-                                    asChild
-                                    tooltip={collapsed ? "Cuenta" : undefined}
-                                    className={collapsed ? "justify-center px-0" : "justify-start"}
-                                >
-                                    <button
-                                        type="button"
-                                        className={collapsed ? "h-9 w-9 grid place-items-center rounded-md" : "w-full cursor-pointer"}
-                                        aria-label="Cuenta"
-                                    >
-                                        <Avatar
-                                            className={`flex items-center justify-center rounded-full text-white font-bold
-                        ${collapsed ? "h-9 w-9 text-sm" : "h-8 w-10 text-base"} 
-                        bg-gray-500`}
-                                        >
-                                            {user
-                                                ? `${user.first_name?.[0]?.toUpperCase() ?? ""}${user.last_name?.[0]?.toUpperCase() ?? ""}`
-                                                : "U"}
-                                        </Avatar>
-
-                                        {!collapsed && (
-                                            <div className="grid grow truncate text-left ml-2">
-                        <span className="truncate text-sm font-medium">
-                          {user ? `${user.first_name} ${user.last_name}` : "Usuario"}
+                      <div className="flex flex-col text-left leading-tight">
+                        <span className="text-sm font-medium text-foreground dark:text-white">
+                          {user
+                            ? `${user.firstName} ${user.lastName}`
+                            : "Usuario"}
                         </span>
-                                                <span className="truncate text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground truncate">
                           {user?.email ?? "sin correo"}
                         </span>
-                                            </div>
-                                        )}
-                                    </button>
-                                </SidebarMenuButton>
-                            </DropdownMenuTrigger>
+                      </div>
+                    )}
+                  </button>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                side="top"
+                className="
+    w-48 
+    bg-card 
+    text-foreground 
+    border border-border 
+    shadow-lg 
+    transition-colors duration-300
+    dark:bg-popover 
+    dark:text-popover-foreground
+  "
+              >
+                {/* Nombre */}
+                <DropdownMenuItem
+                  disabled
+                  className="opacity-80 text-sm font-medium text-muted-foreground"
+                >
+                  {user ? `${user.firstName} ${user.lastName}` : "Usuario"}
+                </DropdownMenuItem>
 
-                            <DropdownMenuContent align="end" side="top" className="w-48">
-                                <DropdownMenuItem disabled>
-                                    {user ? `${user.first_name} ${user.last_name}` : "Usuario"}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => navigate("/profile")} className="focus:bg-muted dark:focus:bg-gray-700 dark:text-gray-100">
-                                    Mi perfil
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:bg-red-500">
-                                    Cerrar sesión
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarFooter>
-        </Sidebar>
-    );
+                <DropdownMenuSeparator className="bg-border/60 dark:bg-border/50" />
+
+                {/* Mi perfil */}
+                <DropdownMenuItem
+                  onClick={() => navigate("/profile")}
+                  className="
+      text-[0.9rem]
+      font-medium
+      text-foreground/90 
+      hover:text-[#F97316]
+      hover:bg-[color-mix(in_oklab,var(--brand-veil),transparent_80%)]
+      dark:text-gray-200
+      dark:hover:text-white
+      dark:hover:bg-white/10
+      transition-all duration-200
+      rounded-sm
+    "
+                >
+                  Mi perfil
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator className="bg-border/60 dark:bg-border/50" />
+
+                {/* Cerrar sesión */}
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="
+      text-[0.9rem]
+      font-medium
+      text-[#dc2626]
+      hover:text-white
+      hover:bg-[#ef4444]
+      dark:text-[#f87171]
+      dark:hover:text-white
+      dark:hover:bg-[#ef4444]/80
+      transition-all duration-200
+      rounded-sm
+    "
+                >
+                  Cerrar sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
 }

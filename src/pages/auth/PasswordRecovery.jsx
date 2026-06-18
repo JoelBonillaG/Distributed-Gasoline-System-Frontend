@@ -17,7 +17,7 @@ import AlertMessage from "@/components/ui/alerts/AlertMessage";
 import logo from "@/assets/favicon.ico";
 
 function PasswordRecovery() {
-  const [input, setInput] = useState("");
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,19 +25,33 @@ function PasswordRecovery() {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
+
+    // ✅ Validación mínima de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setMessage("Por favor, ingresa un correo electrónico válido.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      await passwordService.requestReset(input);
+      await Promise.all([
+        passwordService.requestReset(email),
+        new Promise((resolve) => setTimeout(resolve, 1800)),
+      ]);
+
       setMessage(
         "Si la cuenta existe, hemos enviado un correo con instrucciones."
       );
     } catch (err) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setMessage("Ocurrió un error al procesar la solicitud.");
     } finally {
       setLoading(false);
     }
   };
 
-  const AUTH_BG = "/assets/auth-bg.avif";
+  const AUTH_BG = "/assets/background.webp";
 
   return (
     <div className="relative min-h-dvh overflow-hidden">
@@ -60,7 +74,7 @@ function PasswordRecovery() {
                 Recupera tu contraseña
               </h2>
               <p className="mt-4 text-base/7 text-white/90">
-                Ingresa tu correo electrónico o DNI para recibir un enlace de
+                Ingresa tu correo electrónico para recibir un enlace de
                 restablecimiento.
               </p>
             </CardContent>
@@ -74,13 +88,13 @@ function PasswordRecovery() {
           {/* Header */}
           <header className="flex flex-col items-center gap-3 mb-4 md:mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-center">
-              H<span className="text-sm relative -top-[1px]">&</span>Q Hospital
+              FuelIQ
             </h1>
-            <div className="relative overflow-hidden rounded-full size-16 sm:size-20 md:size-24 border bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)] backdrop-blur-md shadow-sm">
+            <div className="relative overflow-hidden rounded-md size-16 sm:size-20 md:size-24 border bg-[color-mix(in_oklab,var(--brand-veil),transparent_78%)] backdrop-blur-md shadow-sm">
               <img
                 src={logo}
-                alt="H&Q"
-                className="w-full h-full object-cover"
+                alt="FuelIQ Logo"
+                className="w-full h-full object-contain p-1"
                 draggable={false}
               />
             </div>
@@ -94,28 +108,27 @@ function PasswordRecovery() {
                   Recuperar contraseña
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">
-                  Ingresa tu correo electrónico o DNI para restablecer tu
-                  contraseña.
+                  Ingresa tu correo electrónico para restablecer tu contraseña.
                 </CardDescription>
               </CardHeader>
 
               <CardContent className="px-0">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="flex flex-col space-y-2">
-                    <Label htmlFor="input">Email o DNI</Label>
+                    <Label htmlFor="email">Correo electrónico</Label>
                     <Input
-                      id="input"
-                      type="text"
-                      placeholder="ejemplo@mail.com o 12345678"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
+                      id="email"
+                      type="email"
+                      placeholder="ejemplo@mail.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full text-foreground hover:bg-foreground/10"
+                    className="w-full bg-[#FB923C]"
                   >
                     {loading ? "Enviando..." : "Enviar enlace de recuperación"}
                   </Button>
@@ -123,11 +136,7 @@ function PasswordRecovery() {
 
                 {message && (
                   <AlertMessage
-                    type={
-                      message.includes("enviado") // si contiene "enviado", usamos azul/informativo
-                        ? "info"
-                        : "error"
-                    }
+                    type={message.includes("enviado") ? "info" : "error"}
                   >
                     {message}
                   </AlertMessage>
@@ -136,7 +145,21 @@ function PasswordRecovery() {
 
               <CardFooter className="px-0">
                 <div className="ml-auto">
-                  <Button asChild variant="link" className="p-0 text-primary">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="
+                     p-0
+                     text-[#F97316]
+                     font-medium
+                     transition-all
+                     duration-700
+                     ease-out
+                     drop-shadow-[0_0_4px_rgba(249,115,22,0.35)]
+                     hover:text-[#FB923C]
+                     hover:drop-shadow-[0_0_10px_rgba(249,115,22,0.7)]
+                   "
+                  >
                     <Link to="/login">Volver al login</Link>
                   </Button>
                 </div>
@@ -145,7 +168,7 @@ function PasswordRecovery() {
           </div>
 
           <div className="pt-4 text-xs text-muted-foreground text-center md:text-left">
-            © {new Date().getFullYear()} H&Q Hospital
+            © {new Date().getFullYear()} FuelIQ
           </div>
         </div>
       </div>

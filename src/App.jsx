@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AdminLayout from "@/layouts/AdminLayout";
-import Playground from "@/pages/admin/Playground";
 import AppToaster from "@/inc/ui/Toaster.jsx";
+import Dashboard from "@/pages/admin/reports/Dashboard";
 import NotFound from "@/pages/NotFound.jsx";
 import Login from "@/pages/auth/Login";
 import ErrorBoundary from "@/utils/ErrorBoundary";
@@ -23,15 +23,36 @@ import SpecialtiesOfferPage from "@/pages/specialty/SpecialtiesOfferPage.jsx";
 import ProfilePage from "@/pages/profile/ProfilePage";
 import ReportsDashboard from "@/components/admin/ReportsDashboard.jsx";
 import ReportsExport from "@/pages/admin/ReportsExport.jsx";
+import VehiclesPage from "@/pages/vehicles/VehiclesPage.jsx";
+import CreateVehicleModelPage from "@/pages/vehicles/CreateVehicleModelPage.jsx";
+import EditVehicleModelPage from "@/pages/vehicles/EditVehicleModelPage.jsx";
+import VehicleUnitsPage from "@/pages/vehicles/VehicleUnitsPage.jsx";
+import LightVehiclesPage from "@/pages/vehicles/LightVehiclesPage.jsx";
+import LightVehicleUnitsPage from "@/pages/vehicles/LightVehicleUnitsPage.jsx";
+import HeavyVehiclesPage from "@/pages/vehicles/HeavyVehiclesPage.jsx";
+import HeavyVehicleUnitsPage from "@/pages/vehicles/HeavyVehicleUnitsPage.jsx";
+import UsersPage from "./pages/users/UsersPage";
+import DriversPage from "./pages/drivers/DriversPage";
+import LicenseTypesPage from "./pages/license-types";
+import RoutesPage from "./pages/routes/RoutesPage";
+import FormRoutePage from "./pages/routes/FormRoutePage";
+import TripsPage from "./pages/trips/TripsPage";
+import FormCreateTripPage from "./pages/trips/FormCreateTripPage";
+import TripDetailPage from "./pages/trips/TripDetailPage";
+import VehicleDetailsPage from "./pages/admin/reports/VehicleDetailsPage";
+import VehicleRoutesPage from "./pages/admin/reports/VehicleRoutesPage";
+import DriverTripsPage from "./pages/admin/reports/DriverTripsPage";
+import RouteTripsPage from "./pages/admin/reports/RouteTripsPage";
 
 function RoleBasedHome() {
   const { user } = useAuth();
   const roles = Array.isArray(user?.roles)
     ? user.roles.map((r) => String(r).toUpperCase())
     : [];
-  if (roles.includes("ADMIN")) return <Navigate to="/admin/reports" replace />;
-  if (roles.includes("DOCTOR")) return <Navigate to="/consultations" replace />;
-  return <Navigate to="/forbidden" replace />;
+
+  console.log("🧱 User roles:", roles);
+  // Redirigir a trips para todos los roles (ADMIN, SUPERVISOR, DRIVER)
+  return <Navigate to="/trips" replace />;
 }
 
 export default function App() {
@@ -43,36 +64,94 @@ export default function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/password-recovery" element={<PasswordRecovery />} />
-            <Route path="/reset" element={<ResetPassword />} />
-            <Route element={<AdminLayout />}>
-              <Route path="/admin/playground" element={<Playground />} /></Route>
-           
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
 
           {/* Bloque protegido: requiere login */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AdminLayout />}>
+              {/* Rutas de vehículos livianos */}
+              <Route
+                path="/vehicles/light/models"
+                element={<LightVehiclesPage />}
+              />
+              <Route
+                path="/vehicles/light/units"
+                element={<LightVehicleUnitsPage />}
+              />
+
+              {/* Rutas de vehículos pesados */}
+              <Route
+                path="/vehicles/heavy/models"
+                element={<HeavyVehiclesPage />}
+              />
+              <Route
+                path="/vehicles/heavy/units"
+                element={<HeavyVehicleUnitsPage />}
+              />
+
+              {/* Rutas antiguas de vehículos - mantenidas para compatibilidad */}
+              <Route path="/vehicles/models" element={<VehiclesPage />} />
+              <Route
+                path="/vehicles/models/create"
+                element={<CreateVehicleModelPage />}
+              />
+              <Route
+                path="/vehicles/models/edit/:id"
+                element={<EditVehicleModelPage />}
+              />
+              <Route path="/vehicles/units" element={<VehicleUnitsPage />} />
+
+              {/* Redirección de /vehicles a vehículos livianos */}
+              <Route
+                path="/vehicles"
+                element={<Navigate to="/vehicles/light/models" replace />}
+              />
+
               <Route path="/profile" element={<ProfilePage />} />
               {/* Index home según rol */}
               <Route index element={<RoleBasedHome />} />
 
-              {/* --- ADMIN ONLY --- */}
-              <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-                <Route path="/admin/reports" element={<ReportsDashboard />} />
-                <Route path="/admin/reports/export" element={<ReportsExport />} />
-                <Route path="/admin/employees" element={<EmployeesPage />} />
-                <Route path="/admin/centers" element={<MedicalCentersPage />} />
-                <Route path="/admin/specialties" element={<SpecialtiesPage />} />
-                <Route path="/admin/doctors" element={<DoctorsPage />} />
-                <Route path="/admin/playground" element={<Playground />} />
+              {/* --- TRIPS: Available to all authenticated users --- */}
+              <Route
+                element={
+                  <ProtectedRoute
+                    allowedRoles={["ADMIN", "SUPERVISOR", "DRIVER"]}
+                  />
+                }
+              >
+                <Route path="/trips" element={<TripsPage />} />
+                <Route path="/trips/create" element={<FormCreateTripPage />} />
+                <Route path="/trips/view/:id" element={<TripDetailPage />} />
+                <Route path="/trips/:id" element={<TripDetailPage />} />
               </Route>
 
-              {/* --- DOCTOR ONLY --- */}
-              <Route element={<ProtectedRoute allowedRoles={["DOCTOR"]} />}>
-                <Route path="/patients" element={<PatientsPage />} />
-                <Route path="/consultations" element={<MedicalConsultationsPage />} />
-                <Route path="/consultations/form" element={<MedicalConsultationFormPage />} />
-                <Route path="/specialties-offer" element={<SpecialtiesOfferPage />} />
+              {/* --- ADMIN ONLY --- */}
+              <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route
+                  path="/dashboard/vehicle/details"
+                  element={<VehicleDetailsPage />}
+                />
+                <Route
+                  path="/dashboard/vehicles/:vehicleId/routes"
+                  element={<VehicleRoutesPage />}
+                />
+                <Route
+                  path="/dashboard/drivers/:driverId/trips"
+                  element={<DriverTripsPage />}
+                />
+                <Route
+                  path="/dashboard/routes/:routeId/trips"
+                  element={<RouteTripsPage />}
+                />
+                <Route path="/admin/users" element={<UsersPage />} />
+                <Route path="/drivers" element={<DriversPage />} />
+                <Route path="/license-types" element={<LicenseTypesPage />} />
+                <Route path="/routes" element={<RoutesPage />} />
+                <Route path="/routes/create" element={<FormRoutePage />} />
+                <Route path="/routes/edit/:id" element={<FormRoutePage />} />
+                <Route path="/routes/view/:id" element={<FormRoutePage />} />
               </Route>
             </Route>
           </Route>

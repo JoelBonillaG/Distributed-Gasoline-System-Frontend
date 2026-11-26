@@ -13,7 +13,7 @@ Plataforma web para la gestión de flotas, planificación de rutas, seguimiento 
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)
 ![Nginx](https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white)
 
-[Descripción](#descripción-general) · [Funcionalidades](#funcionalidades) · [Arquitectura](#arquitectura) · [Instalación](#instalación-y-configuración) · [Backend](https://github.com/Application-Distributed-Gasoline-System/Backend)
+[Descripción](#descripción-general) · [Funcionalidades](#funcionalidades) · [Arquitectura](#arquitectura) · [Instalación](#instalación-y-configuración) · [Backend](https://github.com/DavidJosueP2/Distributed-Gasoline-System)
 
 </div>
 
@@ -25,7 +25,7 @@ Plataforma web para la gestión de flotas, planificación de rutas, seguimiento 
 
 Este repositorio contiene el frontend del sistema: una Single Page Application (SPA) desarrollada con React y Vite que consume los servicios del backend a través de una API Gateway HTTP. La interfaz permite a administradores, supervisores y conductores participar en diferentes etapas del ciclo de vida de un viaje, de acuerdo con sus roles y los permisos aplicados por el servidor.
 
-El backend se mantiene en un repositorio independiente: [Gasoline System — Backend](https://github.com/Application-Distributed-Gasoline-System/Backend).
+El backend se mantiene en un repositorio independiente: [Gasoline System — Backend](https://github.com/DavidJosueP2/Distributed-Gasoline-System).
 
 ## Funcionalidades
 
@@ -190,7 +190,7 @@ El árbol resume los módulos del sistema de combustible. El repositorio conserv
 
 - Node.js 22.12 o superior dentro de una rama compatible con Vite 7 (recomendado: Node.js 22 LTS actualizado).
 - npm y Git.
-- API Gateway y servicios necesarios del [backend](https://github.com/Application-Distributed-Gasoline-System/Backend) en funcionamiento.
+- API Gateway y servicios necesarios del [backend](https://github.com/DavidJosueP2/Distributed-Gasoline-System) en funcionamiento.
 - Docker y Docker Compose, opcionales para servir el frontend en contenedor.
 
 Vite 7 requiere Node.js 20.19+ o 22.12+. Se recomienda Node.js 22 LTS en lugar de la versión 18 que utilizaba la documentación anterior.
@@ -238,7 +238,7 @@ No incluir contraseñas ni secretos en variables `VITE_`: sus valores pueden que
 
 ### 4. Iniciar el backend
 
-Seguir las instrucciones del [README del backend](https://github.com/Application-Distributed-Gasoline-System/Backend) para configurar y levantar sus servicios. Para el entorno local, la URL de ejemplo del frontend apunta al puerto `8080` de la API Gateway.
+Seguir las instrucciones del [README del backend](https://github.com/DavidJosueP2/Distributed-Gasoline-System) para configurar y levantar sus servicios. Para el entorno local, la URL de ejemplo del frontend apunta al puerto `8080` de la API Gateway.
 
 El Docker Compose de este repositorio solo levanta el frontend; no inicia la API Gateway ni los microservicios.
 
@@ -359,7 +359,7 @@ El manifiesto actual no define un script automatizado de pruebas. Para verificar
 | Repositorio | Descripción |
 | --- | --- |
 | [Distributed-Gasoline-System-Frontend](https://github.com/JoelBonillaG/Distributed-Gasoline-System-Frontend) | Aplicación web React documentada aquí. |
-| [Application-Distributed-Gasoline-System/Backend](https://github.com/Application-Distributed-Gasoline-System/Backend) | API Gateway y microservicios NestJS del sistema distribuido. |
+| [DavidJosueP2/Distributed-Gasoline-System](https://github.com/DavidJosueP2/Distributed-Gasoline-System) | API Gateway y microservicios NestJS del sistema distribuido. |
 
 ## Colaboración
 
